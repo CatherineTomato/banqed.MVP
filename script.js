@@ -1,5 +1,5 @@
 // =========================================
-// banqed MVP - App Shell + Settings
+// banqed MVP - App Shell + Settings + Items
 // =========================================
 
 // -----------------------------------------
@@ -321,10 +321,21 @@ const defaultSettingsData = {
   ]
 };
 
-const settingsData = JSON.parse(localStorage.getItem("settings")) || defaultSettingsData;
+const settingsData =
+  JSON.parse(localStorage.getItem("settings")) || structuredClone(defaultSettingsData);
 
 function saveSettings() {
   localStorage.setItem("settings", JSON.stringify(settingsData));
+}
+
+// -----------------------------------------
+// Shared Item Store
+// -----------------------------------------
+
+let items = JSON.parse(localStorage.getItem("items")) || [];
+
+function saveItems() {
+  localStorage.setItem("items", JSON.stringify(items));
 }
 
 // -----------------------------------------
