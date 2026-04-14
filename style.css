@@ -532,3 +532,32 @@ textarea:focus-visible {
     padding: var(--space-4);
   }
 }
+/* =========================================
+   Add Item progression state
+   ========================================= */
+
+.form-section {
+  opacity: 0.42;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.form-section.is-active,
+.form-section.is-complete {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.form-section.is-hidden {
+  display: none;
+}
+
+.form-feedback {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.form-field select option[value="__add_new__"] {
+  font-style: italic;
+}
