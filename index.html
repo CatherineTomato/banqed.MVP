@@ -56,26 +56,237 @@
   </header>
 
   <main id="main-content" class="app-main">
-    <section
-      id="add-item"
-      class="app-section"
-      aria-labelledby="add-item-title"
-      data-view="add-item"
-    >
-      <div class="page-shell">
-        <div class="page-shell__intro">
-          <p class="page-kicker">banqed</p>
-          <h1 id="add-item-title" class="page-title">Add Item</h1>
-          <p class="page-description">
-            Guided item creation flow.
-          </p>
-        </div>
+<section
+  <section
+  id="add-item"
+  class="app-section"
+  aria-labelledby="add-item-title"
+  data-view="add-item"
+>
+  <div class="page-shell page-shell--form">
+    <div class="page-shell__body">
+      <div class="add-item-layout">
+        <aside class="add-item-layout__aside" aria-hidden="true">
+          <div class="add-item-plus">+</div>
+        </aside>
 
-        <div class="page-shell__body">
-          <p>Step 1 shell placeholder for Add Item.</p>
+        <div class="add-item-layout__main">
+          <div class="page-shell__intro">
+            <p class="page-kicker">banqed</p>
+            <h1 id="add-item-title" class="page-title">Add Item</h1>
+            <p class="page-description">
+              Guided item creation flow.
+            </p>
+          </div>
+
+          <form id="add-item-form" class="add-item-form" novalidate>
+            <section
+              class="form-section is-active"
+              id="section-identity"
+              aria-labelledby="section-identity-title"
+            >
+              <div class="form-section__header">
+                <h2 id="section-identity-title" class="form-section__title">
+                  What is it?
+                </h2>
+              </div>
+
+              <div class="form-grid form-grid--single">
+                <div class="form-field">
+                  <label for="item-name">Name this item</label>
+                  <input
+                    type="text"
+                    id="item-name"
+                    name="name"
+                    maxlength="70"
+                    required
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="item-category">Category</label>
+                  <select id="item-category" name="category" required>
+                    <option value="">Select category</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label for="item-type">Item type</label>
+                  <select id="item-type" name="itemType" required>
+                    <option value="">Select item type</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="item-colours">Colour</label>
+                  <select
+                    id="item-colours"
+                    name="colours"
+                    multiple
+                    required
+                    aria-describedby="item-colours-help"
+                  ></select>
+                  <p id="item-colours-help" class="field-help">
+                    Multi-select field. Searchable custom dropdown will replace this next.
+                  </p>
+                </div>
+
+                <div class="form-field">
+                  <label for="item-details">Detail</label>
+                  <select id="item-details" name="details" multiple></select>
+                </div>
+              </div>
+            </section>
+
+            <section
+              class="form-section"
+              id="section-wearing"
+              aria-labelledby="section-wearing-title"
+            >
+              <div class="form-section__header">
+                <h2 id="section-wearing-title" class="form-section__title">
+                  How do you wear it?
+                </h2>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="item-contexts">Context</label>
+                  <select id="item-contexts" name="contexts" multiple></select>
+                </div>
+
+                <div class="form-field">
+                  <label for="item-styles">Style</label>
+                  <select id="item-styles" name="styles" multiple></select>
+                </div>
+              </div>
+            </section>
+
+            <section
+              class="form-section"
+              id="section-source"
+              aria-labelledby="section-source-title"
+            >
+              <div class="form-section__header">
+                <h2 id="section-source-title" class="form-section__title">
+                  Where is it from?
+                </h2>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="item-brand">Brand</label>
+                  <select id="item-brand" name="brand">
+                    <option value="">Select brand</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label for="item-source-type">Source type</label>
+                  <select id="item-source-type" name="sourceType">
+                    <option value="">Select source type</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid form-grid--single">
+                <div class="form-field">
+                  <label for="item-source-location">Source location</label>
+                  <select id="item-source-location" name="sourceLocation">
+                    <option value="">Select source location</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section
+              class="form-section"
+              id="section-usage"
+              aria-labelledby="section-usage-title"
+            >
+              <div class="form-section__header">
+                <h2 id="section-usage-title" class="form-section__title">
+                  Usage + value
+                </h2>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="item-wear-frequency">Wear frequency</label>
+                  <select
+                    id="item-wear-frequency"
+                    name="wearFrequency"
+                    required
+                  >
+                    <option value="">Select wear frequency</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label for="item-estimated-value">Estimated resale value</label>
+                  <input
+                    type="number"
+                    id="item-estimated-value"
+                    name="estimatedValue"
+                    min="0"
+                    step="0.01"
+                    required
+                    inputmode="decimal"
+                  />
+                </div>
+              </div>
+
+              <div class="form-grid form-grid--single">
+                <div class="form-field">
+                  <label for="item-resale-willingness">Resale willingness</label>
+                  <select
+                    id="item-resale-willingness"
+                    name="resaleWillingness"
+                    required
+                  >
+                    <option value="">Select resale willingness</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section
+              class="form-section"
+              id="section-emotion"
+              aria-labelledby="section-emotion-title"
+            >
+              <div class="form-section__header">
+                <h2 id="section-emotion-title" class="form-section__title">
+                  How do you feel about it?
+                </h2>
+              </div>
+
+              <div class="form-grid form-grid--single">
+                <div class="form-field">
+                  <label for="item-emotional-rating">Emotional rating</label>
+                  <select id="item-emotional-rating" name="emotionalRating">
+                    <option value="">Select emotional rating</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <div class="form-actions">
+              <button type="submit" class="button-primary">
+                Add item
+              </button>
+            </div>
+          </form>
         </div>
       </div>
-    </section>
+    </div>
+  </div>
+</section>
 
     <section
       id="wardrobe"
