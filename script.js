@@ -385,7 +385,7 @@ function addUniqueOption(targetArray, newValue) {
 }
 
 // -----------------------------------------
-// Add Item Form Elements
+// DOM refs
 // -----------------------------------------
 
 const addItemForm = document.getElementById("add-item-form");
@@ -406,6 +406,14 @@ const fieldRefs = {
 };
 
 const multiState = {
+  colours: [],
+  details: [],
+  contexts: [],
+  styles: [],
+  emotionalRating: []
+};
+
+const multiDraftState = {
   colours: [],
   details: [],
   contexts: [],
@@ -561,6 +569,10 @@ function formatMultiTriggerLabel(fieldKey) {
   return `${values.length} selected`;
 }
 
+function cloneCommittedStateToDraft(fieldKey) {
+  multiDraftState[fieldKey] = [...multiState[fieldKey]];
+}
+
 function renderMultiSelect(fieldKey) {
   const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
   const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
@@ -573,27 +585,37 @@ function renderMultiSelect(fieldKey) {
 
   options.forEach((value) => {
     const optionId = `${fieldKey}-${value.replace(/\s+/g, "-").toLowerCase()}`;
+
     const labelEl = document.createElement("label");
     labelEl.className = "multi-select__option";
     labelEl.setAttribute("for", optionId);
+
+    if (multiDraftState[fieldKey].includes(value)) {
+      labelEl.classList.add("is-selected");
+    }
 
     const inputEl = document.createElement("input");
     inputEl.type = "checkbox";
     inputEl.id = optionId;
     inputEl.value = value;
-    inputEl.checked = multiState[fieldKey].includes(value);
+    inputEl.checked = multiDraftState[fieldKey].includes(value);
 
     inputEl.addEventListener("change", () => {
       if (inputEl.checked) {
-        if (!multiState[fieldKey].includes(value)) {
-          multiState[fieldKey].push(value);
+        if (!multiDraftState[fieldKey].includes(value)) {
+          multiDraftState[fieldKey].push(value);
         }
+        labelEl.classList.add("is-selected");
       } else {
-        multiState[fieldKey] = multiState[fieldKey].filter((item) => item !== value);
+        multiDraftState[fieldKey] = multiDraftState[fieldKey].filter(
+          (item) => item !== value
+        );
+        labelEl.classList.remove("is-selected");
       }
     });
 
     const textEl = document.createElement("span");
+    textEl.className = "multi-select__label";
     textEl.textContent = value;
 
     labelEl.appendChild(inputEl);
@@ -602,10 +624,6 @@ function renderMultiSelect(fieldKey) {
   });
 
   trigger.textContent = formatMultiTriggerLabel(fieldKey);
-  trigger.setAttribute(
-    "data-has-value",
-    String(multiState[fieldKey].length > 0)
-  );
 }
 
 function renderAllMultiSelects() {
@@ -628,6 +646,8 @@ function closeAllMultiPanels() {
 
 function openMultiPanel(fieldKey) {
   closeAllMultiPanels();
+  cloneCommittedStateToDraft(fieldKey);
+  renderMultiSelect(fieldKey);
 
   const multiEl = document.querySelector(`.multi-select[data-field="${fieldKey}"]`);
   const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
@@ -651,11 +671,31 @@ function handleMultiAdd(fieldKey) {
   const storedValue = addUniqueOption(settingsData[optionsKey], rawValue);
   if (!storedValue) return;
 
-  if (!multiState[fieldKey].includes(storedValue)) {
-    multiState[fieldKey].push(storedValue);
+  if (!multiDraftState[fieldKey].includes(storedValue)) {
+    multiDraftState[fieldKey].push(storedValue);
   }
 
   renderMultiSelect(fieldKey);
+}
+
+function saveMultiPanel(fieldKey) {
+  multiState[fieldKey] = [...multiDraftState[fieldKey]];
+  renderMultiSelect(fieldKey);
+  closeAllMultiPanels();
+
+  const parentSection = document
+    .querySelector(`.multi-select[data-field="${fieldKey}"]`)
+    ?.closest(".form-section");
+
+  if (!parentSection) return;
+
+  const sectionKey = parentSection.dataset.sectionKey;
+
+  if (sectionKey && isSectionComplete(sectionKey)) {
+    completeSectionAndAdvance(sectionKey);
+  } else {
+    renderSectionStates();
+  }
 }
 
 // -----------------------------------------
@@ -705,54 +745,78 @@ function isSectionComplete(key) {
   return false;
 }
 
-function getUnlockedIndex() {
-  let unlockedIndex = 0;
-
-  for (let index = 0; index < sectionOrder.length; index += 1) {
-    const key = sectionOrder[index];
-    if (completedSections.has(key)) {
-      unlockedIndex = index + 1;
-    } else {
-      break;
-    }
-  }
-
-  return Math.min(unlockedIndex, sectionOrder.length - 1);
-}
-
 function setActiveSection(key, scroll = false) {
-  const unlockedIndex = getUnlockedIndex();
-  const targetIndex = getSectionIndex(key);
-
-  if (targetIndex > unlockedIndex) return;
-
   activeSectionKey = key;
   renderSectionStates();
 
   if (scroll) {
-    const targetSection = formSections[key];
-    targetSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    formSections[key]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
   }
 }
 
-function renderSectionStates() {
-  const unlockedIndex = getUnlockedIndex();
+function completeSectionAndAdvance(sectionKey) {
+  completedSections.add(sectionKey);
 
-  sectionOrder.forEach((key, index) => {
-    const sectionEl = formSections[key];
-    if (!sectionEl) return;
+  const currentIndex = getSectionIndex(sectionKey);
+  const nextKey = sectionOrder[currentIndex + 1];
 
-    sectionEl.classList.remove("is-active", "is-complete");
-    sectionEl.style.pointerEvents = index <= unlockedIndex ? "auto" : "none";
+ if (nextKey) {
+  activeSectionKey = nextKey;
+  renderSectionStates();
+  formSections[nextKey]?.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+} else {
+  renderSectionStates();
+}
+}
 
-    if (key === activeSectionKey) {
-      sectionEl.classList.add("is-active");
-    } else if (completedSections.has(key)) {
-      sectionEl.classList.add("is-complete");
+function renderMultiSelect(fieldKey) {
+  const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
+  const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
+  const optionsWrap = document.querySelector(`[data-multi-options="${fieldKey}"]`);
+
+  if (!trigger || !panel || !optionsWrap) return;
+
+  const options = settingsData[multiConfig[fieldKey].optionsKey];
+  optionsWrap.innerHTML = "";
+
+  options.forEach((value) => {
+    const optionEl = document.createElement("button");
+    optionEl.type = "button";
+    optionEl.className = "multi-select__option";
+
+    if (multiDraftState[fieldKey].includes(value)) {
+      optionEl.classList.add("is-selected");
     }
+
+    optionEl.addEventListener("click", () => {
+      const isSelected = multiDraftState[fieldKey].includes(value);
+
+      if (isSelected) {
+        multiDraftState[fieldKey] = multiDraftState[fieldKey].filter(
+          (item) => item !== value
+        );
+        optionEl.classList.remove("is-selected");
+      } else {
+        multiDraftState[fieldKey].push(value);
+        optionEl.classList.add("is-selected");
+      }
+    });
+
+    const textEl = document.createElement("span");
+    textEl.className = "multi-select__label";
+    textEl.textContent = value;
+
+    optionEl.appendChild(textEl);
+    optionsWrap.appendChild(optionEl);
   });
 
-  updatePlusPosition();
+  trigger.textContent = formatMultiTriggerLabel(fieldKey);
 }
 
 function updatePlusPosition() {
@@ -771,51 +835,29 @@ function updatePlusPosition() {
 
 function validateSection(key) {
   if (key === "identity") {
-    if (fieldRefs.name.value.trim() === "") {
-      return "Item name is required.";
-    }
-    if (fieldRefs.category.value === "") {
-      return "Category is required.";
-    }
-    if (fieldRefs.itemType.value === "") {
-      return "Item type is required.";
-    }
-    if (multiState.colours.length === 0) {
-      return "Select at least one colour.";
-    }
-    if (multiState.details.length === 0) {
-      return "Select at least one detail.";
-    }
+    if (fieldRefs.name.value.trim() === "") return "Item name is required.";
+    if (fieldRefs.category.value === "") return "Category is required.";
+    if (fieldRefs.itemType.value === "") return "Item type is required.";
+    if (multiState.colours.length === 0) return "Select at least one colour.";
+    if (multiState.details.length === 0) return "Select at least one detail.";
     return null;
   }
 
   if (key === "wearing") {
-    if (multiState.contexts.length === 0) {
-      return "Select at least one context.";
-    }
-    if (multiState.styles.length === 0) {
-      return "Select at least one style.";
-    }
+    if (multiState.contexts.length === 0) return "Select at least one context.";
+    if (multiState.styles.length === 0) return "Select at least one style.";
     return null;
   }
 
   if (key === "source") {
-    if (fieldRefs.brand.value === "") {
-      return "Brand is required.";
-    }
-    if (fieldRefs.sourceType.value === "") {
-      return "Source type is required.";
-    }
-    if (fieldRefs.sourceLocation.value === "") {
-      return "Source location is required.";
-    }
+    if (fieldRefs.brand.value === "") return "Brand is required.";
+    if (fieldRefs.sourceType.value === "") return "Source type is required.";
+    if (fieldRefs.sourceLocation.value === "") return "Source location is required.";
     return null;
   }
 
   if (key === "usage") {
-    if (fieldRefs.wearFrequency.value === "") {
-      return "Wear frequency is required.";
-    }
+    if (fieldRefs.wearFrequency.value === "") return "Wear frequency is required.";
     if (
       fieldRefs.estimatedValue.value === "" ||
       Number(fieldRefs.estimatedValue.value) < 0
@@ -829,24 +871,6 @@ function validateSection(key) {
   }
 
   return null;
-}
-
-function continueSection(key) {
-  clearFeedback();
-
-  const error = validateSection(key);
-  if (error) {
-    setFeedback(error);
-    setActiveSection(key, true);
-    return;
-  }
-
-  completedSections.add(key);
-
-  const currentIndex = getSectionIndex(key);
-  const nextKey = sectionOrder[currentIndex + 1] || "emotion";
-
-  setActiveSection(nextKey, true);
 }
 
 // -----------------------------------------
@@ -883,13 +907,9 @@ function buildItemFromForm() {
 }
 
 function validateFullForm() {
-  const sectionKeys = ["identity", "wearing", "source", "usage"];
-
-  for (const key of sectionKeys) {
+  for (const key of ["identity", "wearing", "source", "usage"]) {
     const error = validateSection(key);
-    if (error) {
-      return { key, error };
-    }
+    if (error) return { key, error };
   }
 
   return null;
@@ -899,11 +919,10 @@ function resetAddItemForm() {
   addItemForm.reset();
   clearFeedback();
 
-  multiState.colours = [];
-  multiState.details = [];
-  multiState.contexts = [];
-  multiState.styles = [];
-  multiState.emotionalRating = [];
+  Object.keys(multiState).forEach((key) => {
+    multiState[key] = [];
+    multiDraftState[key] = [];
+  });
 
   completedSections.clear();
   activeSectionKey = "identity";
@@ -932,23 +951,23 @@ function handleAddItemSubmit(event) {
   items.push(newItem);
   saveItems();
 
-  const message =
+  setFeedback(
     newItem.status === "sales"
       ? "Item added to sales."
-      : "Item added to wardrobe.";
+      : "Item added to wardrobe."
+  );
 
   resetAddItemForm();
-  setFeedback(message);
 }
 
 // -----------------------------------------
 // Single-select add-new handling
 // -----------------------------------------
 
-function handleSelectAddNew(selectEl, settingsKey, placeholder) {
+function handleSelectAddNew(selectEl, settingsKey, placeholder, promptText) {
   if (selectEl.value !== "__add_new__") return;
 
-  const rawValue = window.prompt(`Add new ${settingsKey}`);
+  const rawValue = window.prompt(promptText);
   if (!rawValue) {
     selectEl.value = "";
     return;
@@ -990,7 +1009,14 @@ function handleCategoryChange() {
 function handleItemTypeChange() {
   clearFeedback();
 
-  if (fieldRefs.itemType.value !== "__add_new__") return;
+  if (fieldRefs.itemType.value !== "__add_new__") {
+    const sectionKey = "identity";
+    if (isSectionComplete(sectionKey)) {
+      // wait for dropdown saves, do not auto-advance here
+      renderSectionStates();
+    }
+    return;
+  }
 
   const category = fieldRefs.category.value;
   if (!category) {
@@ -1024,10 +1050,60 @@ function handleSourceTypeChange() {
   ) {
     fieldRefs.sourceLocation.value = "Unknown";
   }
+
+  if (isSectionComplete("source")) {
+    completeSectionAndAdvance("source");
+  } else {
+    renderSectionStates();
+  }
+}
+
+function handleSourceLocationChange() {
+  clearFeedback();
+
+  handleSelectAddNew(
+    fieldRefs.sourceLocation,
+    "sourceLocations",
+    "Select source location",
+    "Add new source location"
+  );
+
+  if (isSectionComplete("source")) {
+    completeSectionAndAdvance("source");
+  } else {
+    renderSectionStates();
+  }
+}
+
+function handleBrandChange() {
+  clearFeedback();
+
+  handleSelectAddNew(
+    fieldRefs.brand,
+    "brands",
+    "Select brand",
+    "Add new brand"
+  );
+
+  if (isSectionComplete("source")) {
+    completeSectionAndAdvance("source");
+  } else {
+    renderSectionStates();
+  }
+}
+
+function handleUsageFieldChange() {
+  clearFeedback();
+
+  if (isSectionComplete("usage")) {
+    completeSectionAndAdvance("usage");
+  } else {
+    renderSectionStates();
+  }
 }
 
 // -----------------------------------------
-// Event wiring
+// Wiring
 // -----------------------------------------
 
 function wireNavigation() {
@@ -1036,70 +1112,40 @@ function wireNavigation() {
   });
 }
 
-function wireSectionEvents() {
-  document.querySelectorAll("[data-continue-section]").forEach((button) => {
-    button.addEventListener("click", () => {
-      continueSection(button.dataset.continueSection);
-    });
-  });
-
-  sectionOrder.forEach((key) => {
-    const sectionEl = formSections[key];
-    if (!sectionEl) return;
-
-    sectionEl.addEventListener("click", () => {
-      if (completedSections.has(key) || key === activeSectionKey) {
-        setActiveSection(key, false);
-      }
-    });
-  });
-}
-
 function wireSingleSelects() {
   fieldRefs.category.addEventListener("change", handleCategoryChange);
   fieldRefs.itemType.addEventListener("change", handleItemTypeChange);
-
-  fieldRefs.brand.addEventListener("change", () => {
-    handleSelectAddNew(fieldRefs.brand, "brands", "Select brand");
-  });
-
-  fieldRefs.sourceLocation.addEventListener("change", () => {
-    handleSelectAddNew(
-      fieldRefs.sourceLocation,
-      "sourceLocations",
-      "Select source location"
-    );
-  });
-
+  fieldRefs.brand.addEventListener("change", handleBrandChange);
   fieldRefs.sourceType.addEventListener("change", handleSourceTypeChange);
+  fieldRefs.sourceLocation.addEventListener("change", handleSourceLocationChange);
+  fieldRefs.wearFrequency.addEventListener("change", handleUsageFieldChange);
+  fieldRefs.estimatedValue.addEventListener("input", handleUsageFieldChange);
+  fieldRefs.resaleWillingness.addEventListener("change", handleUsageFieldChange);
+  fieldRefs.name.addEventListener("input", renderSectionStates);
 }
 
 function wireMultiSelects() {
   document.querySelectorAll("[data-multi-trigger]").forEach((trigger) => {
     trigger.addEventListener("click", () => {
-      const fieldKey = trigger.dataset.multiTrigger;
-      openMultiPanel(fieldKey);
-    });
-  });
-
-  document.querySelectorAll("[data-multi-save]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const fieldKey = button.dataset.multiSave;
-      renderMultiSelect(fieldKey);
-      closeAllMultiPanels();
+      openMultiPanel(trigger.dataset.multiTrigger);
     });
   });
 
   document.querySelectorAll("[data-multi-add]").forEach((button) => {
     button.addEventListener("click", () => {
-      const fieldKey = button.dataset.multiAdd;
-      handleMultiAdd(fieldKey);
+      handleMultiAdd(button.dataset.multiAdd);
+    });
+  });
+
+  document.querySelectorAll("[data-multi-save]").forEach((button) => {
+    button.addEventListener("click", () => {
+      saveMultiPanel(button.dataset.multiSave);
     });
   });
 
   document.addEventListener("click", (event) => {
-    const clickedInside = event.target.closest(".multi-select");
-    if (!clickedInside) {
+    const inside = event.target.closest(".multi-select");
+    if (!inside) {
       closeAllMultiPanels();
       renderAllMultiSelects();
     }
@@ -1115,12 +1161,10 @@ function initAddItemForm() {
   closeAllMultiPanels();
   renderSectionStates();
 
-  wireSectionEvents();
   wireSingleSelects();
   wireMultiSelects();
 
   addItemForm.addEventListener("submit", handleAddItemSubmit);
-
   window.addEventListener("resize", updatePlusPosition);
 }
 

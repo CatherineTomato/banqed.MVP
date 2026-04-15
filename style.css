@@ -669,9 +669,9 @@ textarea:focus-visible {
 }
 
 .form-section {
-  opacity: 0.14;
+  opacity: 0.1;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.22s ease;
 }
 
 .form-section.is-active {
@@ -680,25 +680,8 @@ textarea:focus-visible {
 }
 
 .form-section.is-complete {
-  opacity: 0.18;
+  opacity: 0.16;
   pointer-events: auto;
-}
-
-.form-section__actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.button-secondary {
-  min-height: 2.8rem;
-  padding: 0.65rem 1rem;
-  border: 1px solid var(--color-border-input);
-  background: transparent;
-  font-weight: 700;
-}
-
-.button-secondary:hover {
-  background: rgba(0, 0, 0, 0.03);
 }
 
 .multi-select {
@@ -722,6 +705,7 @@ textarea:focus-visible {
   content: "▾";
   font-size: 0.9rem;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .multi-select.is-open .multi-select__trigger::after {
@@ -736,43 +720,52 @@ textarea:focus-visible {
   z-index: 40;
   border: 1px solid var(--color-border-input);
   background: var(--color-bg);
-  padding: 0.4rem;
+  padding: 0.5rem;
 }
 
 .multi-select__options {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.35rem;
   max-height: 14rem;
   overflow-y: auto;
-  padding-right: 0.15rem;
 }
 
 .multi-select__option {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.35rem 0.35rem;
+  min-height: 2.7rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--color-border-input);
+  background: transparent;
   cursor: pointer;
+  text-align: left;
 }
 
 .multi-select__option:hover {
   background: rgba(0, 0, 0, 0.04);
 }
 
-.multi-select__option input {
-  margin: 0;
+.multi-select__option.is-selected {
+  background: var(--color-accent);
+}
+
+.multi-select__label {
+  display: block;
+  line-height: 1.2;
+  width: 100%;
 }
 
 .multi-select__footer {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
-  padding-top: 0.5rem;
+  padding-top: 0.65rem;
 }
 
 .multi-select__save,
 .multi-select__add {
-  min-height: 2.4rem;
+  min-height: 2.45rem;
   padding: 0.45rem 0.85rem;
   border: 1px solid var(--color-border-input);
   font-weight: 700;
@@ -798,7 +791,6 @@ textarea:focus-visible {
     position: static;
     width: auto;
     height: auto;
-    pointer-events: none;
   }
 
   .add-item-plus {
@@ -810,4 +802,10 @@ textarea:focus-visible {
   .add-item-layout__main {
     grid-column: auto;
   }
+}
+.form-section.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  scroll-margin-top: 20vh;
+  scroll-margin-bottom: 20vh;
 }
