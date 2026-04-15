@@ -1,6 +1,6 @@
 // =========================================
 // banqed MVP - App Shell + Settings + Items
-// Add Item page implementation
+// Add Item workflow refined
 // =========================================
 
 // -----------------------------------------
@@ -30,9 +30,7 @@ function showSection(sectionId) {
 }
 
 function handleNavClick(event) {
-  const control = event.currentTarget;
-  const targetSection = control.dataset.section;
-  showSection(targetSection);
+  showSection(event.currentTarget.dataset.section);
 }
 
 // -----------------------------------------
@@ -343,91 +341,16 @@ function saveItems() {
 }
 
 // -----------------------------------------
-// Add Item Form Elements
-// -----------------------------------------
-
-const addItemForm = document.getElementById("add-item-form");
-const feedbackEl = document.getElementById("form-feedback");
-
-const fieldRefs = {
-  name: document.getElementById("item-name"),
-  category: document.getElementById("item-category"),
-  itemType: document.getElementById("item-type"),
-  colours: document.getElementById("item-colours"),
-  details: document.getElementById("item-details"),
-  contexts: document.getElementById("item-contexts"),
-  styles: document.getElementById("item-styles"),
-  brand: document.getElementById("item-brand"),
-  sourceType: document.getElementById("item-source-type"),
-  sourceLocation: document.getElementById("item-source-location"),
-  wearFrequency: document.getElementById("item-wear-frequency"),
-  estimatedValue: document.getElementById("item-estimated-value"),
-  resaleWillingness: document.getElementById("item-resale-willingness"),
-  emotionalRating: document.getElementById("item-emotional-rating")
-};
-
-const formSections = [
-  {
-    key: "identity",
-    element: document.getElementById("section-identity"),
-    isComplete: () =>
-      fieldRefs.name.value.trim() !== "" &&
-      fieldRefs.category.value !== "" &&
-      fieldRefs.itemType.value !== "" &&
-      getMultiSelectValues(fieldRefs.colours).length > 0 &&
-      getMultiSelectValues(fieldRefs.details).length > 0
-  },
-  {
-    key: "wearing",
-    element: document.getElementById("section-wearing"),
-    isComplete: () =>
-      getMultiSelectValues(fieldRefs.contexts).length > 0 &&
-      getMultiSelectValues(fieldRefs.styles).length > 0
-  },
-  {
-    key: "source",
-    element: document.getElementById("section-source"),
-    isComplete: () =>
-      fieldRefs.brand.value !== "" &&
-      fieldRefs.sourceType.value !== "" &&
-      fieldRefs.sourceLocation.value !== ""
-  },
-  {
-    key: "usage",
-    element: document.getElementById("section-usage"),
-    isComplete: () =>
-      fieldRefs.wearFrequency.value !== "" &&
-      fieldRefs.estimatedValue.value !== "" &&
-      Number(fieldRefs.estimatedValue.value) >= 0 &&
-      fieldRefs.resaleWillingness.value !== ""
-  },
-  {
-    key: "emotion",
-    element: document.getElementById("section-emotion"),
-    isComplete: () => true
-  }
-];
-
-// -----------------------------------------
 // Helpers
 // -----------------------------------------
 
 function generateId() {
-  if (window.crypto && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
   return `item_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
 function nowISO() {
   return new Date().toISOString();
-}
-
-function getMultiSelectValues(selectEl) {
-  return Array.from(selectEl.selectedOptions)
-    .map((option) => option.value)
-    .filter((value) => value !== "" && value !== "__add_new__");
 }
 
 function deriveSourceChannel(sourceType) {
@@ -437,25 +360,7 @@ function deriveSourceChannel(sourceType) {
   if (inPersonTypes.includes(sourceType)) return "In-person";
   if (sourceType === "Online") return "Online";
   if (transferTypes.includes(sourceType)) return "Transfer";
-
   return null;
-}
-
-function clearFeedback() {
-  if (feedbackEl) feedbackEl.textContent = "";
-}
-
-function setFeedback(message) {
-  if (feedbackEl) feedbackEl.textContent = message;
-}
-
-function scrollToSection(sectionEl) {
-  if (!sectionEl) return;
-
-  sectionEl.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-  });
 }
 
 function sortCaseInsensitive(values) {
@@ -466,52 +371,117 @@ function addUniqueOption(targetArray, newValue) {
   const normalized = normalizeValue(newValue);
   if (!normalized) return null;
 
-  const exists = targetArray.some(
+  const existing = targetArray.find(
     (item) => item.toLowerCase() === normalized.toLowerCase()
   );
 
-  if (!exists) {
-    targetArray.push(normalized);
-    sortCaseInsensitive(targetArray);
-    saveSettings();
-  }
+  if (existing) return existing;
 
-  const match = targetArray.find(
-    (item) => item.toLowerCase() === normalized.toLowerCase()
-  );
+  targetArray.push(normalized);
+  sortCaseInsensitive(targetArray);
+  saveSettings();
 
-  return match || normalized;
+  return normalized;
 }
 
 // -----------------------------------------
-// Dropdown population
+// Add Item Form Elements
 // -----------------------------------------
 
-function populateSelect(selectEl, options, config = {}) {
-  const {
-    placeholder = null,
-    includeAddNew = false,
-    preserveValue = false,
-    multi = false
-  } = config;
+const addItemForm = document.getElementById("add-item-form");
+const feedbackEl = document.getElementById("form-feedback");
+const addItemLayout = document.getElementById("add-item-layout");
+const addItemPlus = document.getElementById("add-item-plus");
 
-  const previousValues = multi
-    ? getMultiSelectValues(selectEl)
-    : [selectEl.value];
+const fieldRefs = {
+  name: document.getElementById("item-name"),
+  category: document.getElementById("item-category"),
+  itemType: document.getElementById("item-type"),
+  brand: document.getElementById("item-brand"),
+  sourceType: document.getElementById("item-source-type"),
+  sourceLocation: document.getElementById("item-source-location"),
+  wearFrequency: document.getElementById("item-wear-frequency"),
+  estimatedValue: document.getElementById("item-estimated-value"),
+  resaleWillingness: document.getElementById("item-resale-willingness")
+};
 
+const multiState = {
+  colours: [],
+  details: [],
+  contexts: [],
+  styles: [],
+  emotionalRating: []
+};
+
+const multiConfig = {
+  colours: {
+    label: "Select colours",
+    optionsKey: "colours",
+    addPrompt: "Add new colour"
+  },
+  details: {
+    label: "Select details",
+    optionsKey: "details",
+    addPrompt: "Add new detail"
+  },
+  contexts: {
+    label: "Select contexts",
+    optionsKey: "contexts",
+    addPrompt: "Add new context"
+  },
+  styles: {
+    label: "Select styles",
+    optionsKey: "styles",
+    addPrompt: "Add new style"
+  },
+  emotionalRating: {
+    label: "Select emotional rating",
+    optionsKey: "emotionalRatings",
+    addPrompt: null
+  }
+};
+
+const sectionOrder = ["identity", "wearing", "source", "usage", "emotion"];
+let activeSectionKey = "identity";
+const completedSections = new Set();
+
+const formSections = {
+  identity: document.getElementById("section-identity"),
+  wearing: document.getElementById("section-wearing"),
+  source: document.getElementById("section-source"),
+  usage: document.getElementById("section-usage"),
+  emotion: document.getElementById("section-emotion")
+};
+
+// -----------------------------------------
+// Feedback
+// -----------------------------------------
+
+function clearFeedback() {
+  if (feedbackEl) feedbackEl.textContent = "";
+}
+
+function setFeedback(message) {
+  if (feedbackEl) feedbackEl.textContent = message;
+}
+
+// -----------------------------------------
+// Single-select population
+// -----------------------------------------
+
+function populateSingleSelect(selectEl, options, placeholder, includeAddNew = false) {
+  const previousValue = selectEl.value;
   selectEl.innerHTML = "";
 
-  if (!multi && placeholder !== null) {
-    const placeholderOption = document.createElement("option");
-    placeholderOption.value = "";
-    placeholderOption.textContent = placeholder;
-    selectEl.appendChild(placeholderOption);
-  }
+  const placeholderOption = document.createElement("option");
+  placeholderOption.value = "";
+  placeholderOption.textContent = placeholder;
+  selectEl.appendChild(placeholderOption);
 
-  options.forEach((optionValue) => {
+  options.forEach((value) => {
     const optionEl = document.createElement("option");
-    optionEl.value = optionValue;
-    optionEl.textContent = optionValue;
+    optionEl.value = value;
+    optionEl.textContent = value;
     selectEl.appendChild(optionEl);
   });
 
@@ -522,341 +492,366 @@ function populateSelect(selectEl, options, config = {}) {
     selectEl.appendChild(addNewOption);
   }
 
-  if (preserveValue) {
-    if (multi) {
-      Array.from(selectEl.options).forEach((option) => {
-        option.selected = previousValues.includes(option.value);
-      });
-    } else {
-      const previousValue = previousValues[0];
-      const exists = Array.from(selectEl.options).some(
-        (option) => option.value === previousValue
-      );
-      selectEl.value = exists ? previousValue : "";
-    }
-  }
+  const exists = Array.from(selectEl.options).some(
+    (option) => option.value === previousValue
+  );
+  selectEl.value = exists ? previousValue : "";
 }
 
-function populateAllDropdowns() {
-  populateSelect(fieldRefs.category, settingsData.categories, {
-    placeholder: "Select category",
-    includeAddNew: true
-  });
+function refreshItemTypeOptions() {
+  const category = fieldRefs.category.value;
+  const options = settingsData.itemTypesByCategory[category] || [];
+  populateSingleSelect(fieldRefs.itemType, options, "Select item type", true);
+}
 
-  populateSelect(fieldRefs.itemType, [], {
-    placeholder: "Select item type",
-    includeAddNew: true
-  });
+function populateSingleDropdowns() {
+  populateSingleSelect(
+    fieldRefs.category,
+    settingsData.categories,
+    "Select category",
+    true
+  );
 
-  populateSelect(fieldRefs.colours, settingsData.colours, {
-    includeAddNew: true,
-    multi: true
-  });
+  populateSingleSelect(fieldRefs.itemType, [], "Select item type", true);
 
-  populateSelect(fieldRefs.details, settingsData.details, {
-    includeAddNew: true,
-    multi: true
-  });
+  populateSingleSelect(
+    fieldRefs.brand,
+    settingsData.brands,
+    "Select brand",
+    true
+  );
 
-  populateSelect(fieldRefs.contexts, settingsData.contexts, {
-    includeAddNew: true,
-    multi: true
-  });
+  populateSingleSelect(
+    fieldRefs.sourceType,
+    settingsData.sourceTypes,
+    "Select source type"
+  );
 
-  populateSelect(fieldRefs.styles, settingsData.styles, {
-    includeAddNew: true,
-    multi: true
-  });
+  populateSingleSelect(
+    fieldRefs.sourceLocation,
+    settingsData.sourceLocations,
+    "Select source location",
+    true
+  );
 
-  populateSelect(fieldRefs.brand, settingsData.brands, {
-    placeholder: "Select brand",
-    includeAddNew: true
-  });
+  populateSingleSelect(
+    fieldRefs.wearFrequency,
+    settingsData.wearFrequencies,
+    "Select wear frequency"
+  );
 
-  populateSelect(fieldRefs.sourceType, settingsData.sourceTypes, {
-    placeholder: "Select source type"
-  });
-
-  populateSelect(fieldRefs.sourceLocation, settingsData.sourceLocations, {
-    placeholder: "Select source location",
-    includeAddNew: true
-  });
-
-  populateSelect(fieldRefs.wearFrequency, settingsData.wearFrequencies, {
-    placeholder: "Select wear frequency"
-  });
-
-  populateSelect(
+  populateSingleSelect(
     fieldRefs.resaleWillingness,
     settingsData.resaleWillingnessOptions,
-    {
-      placeholder: "Select resale willingness"
-    }
+    "Select resale willingness"
   );
-
-  populateSelect(fieldRefs.emotionalRating, settingsData.emotionalRatings, {
-    placeholder: "Select emotional rating"
-  });
-}
-
-function refreshItemTypeOptions(preserve = false) {
-  const selectedCategory = fieldRefs.category.value;
-  const itemTypeOptions =
-    settingsData.itemTypesByCategory[selectedCategory] || [];
-
-  populateSelect(fieldRefs.itemType, itemTypeOptions, {
-    placeholder: "Select item type",
-    includeAddNew: true,
-    preserveValue: preserve
-  });
 }
 
 // -----------------------------------------
-// Add-new behaviour
+// Multi-select rendering
 // -----------------------------------------
 
-function addNewSingleValueOption(settingsKey, selectEl, promptLabel, placeholder) {
-  const rawValue = window.prompt(promptLabel);
+function formatMultiTriggerLabel(fieldKey) {
+  const values = multiState[fieldKey];
+  const baseLabel = multiConfig[fieldKey].label;
 
-  if (!rawValue) {
-    selectEl.value = "";
-    return;
-  }
-
-  const storedValue = addUniqueOption(settingsData[settingsKey], rawValue);
-
-  populateSelect(selectEl, settingsData[settingsKey], {
-    placeholder,
-    includeAddNew: true
-  });
-
-  if (storedValue) {
-    selectEl.value = storedValue;
-  }
+  if (!values.length) return baseLabel;
+  if (values.length === 1) return values[0];
+  if (values.length === 2) return `${values[0]}, ${values[1]}`;
+  return `${values.length} selected`;
 }
 
-function addNewMultiValueOption(settingsKey, selectEl, promptLabel) {
-  const rawValue = window.prompt(promptLabel);
+function renderMultiSelect(fieldKey) {
+  const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
+  const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
+  const optionsWrap = document.querySelector(`[data-multi-options="${fieldKey}"]`);
 
-  if (!rawValue) {
-    populateSelect(selectEl, settingsData[settingsKey], {
-      includeAddNew: true,
-      multi: true,
-      preserveValue: true
+  if (!trigger || !panel || !optionsWrap) return;
+
+  const options = settingsData[multiConfig[fieldKey].optionsKey];
+  optionsWrap.innerHTML = "";
+
+  options.forEach((value) => {
+    const optionId = `${fieldKey}-${value.replace(/\s+/g, "-").toLowerCase()}`;
+    const labelEl = document.createElement("label");
+    labelEl.className = "multi-select__option";
+    labelEl.setAttribute("for", optionId);
+
+    const inputEl = document.createElement("input");
+    inputEl.type = "checkbox";
+    inputEl.id = optionId;
+    inputEl.value = value;
+    inputEl.checked = multiState[fieldKey].includes(value);
+
+    inputEl.addEventListener("change", () => {
+      if (inputEl.checked) {
+        if (!multiState[fieldKey].includes(value)) {
+          multiState[fieldKey].push(value);
+        }
+      } else {
+        multiState[fieldKey] = multiState[fieldKey].filter((item) => item !== value);
+      }
     });
-    return;
-  }
 
-  const storedValue = addUniqueOption(settingsData[settingsKey], rawValue);
-  const previousValues = getMultiSelectValues(selectEl);
-  const nextValues = storedValue
-    ? Array.from(new Set([...previousValues, storedValue]))
-    : previousValues;
+    const textEl = document.createElement("span");
+    textEl.textContent = value;
 
-  populateSelect(selectEl, settingsData[settingsKey], {
-    includeAddNew: true,
-    multi: true
+    labelEl.appendChild(inputEl);
+    labelEl.appendChild(textEl);
+    optionsWrap.appendChild(labelEl);
   });
 
-  Array.from(selectEl.options).forEach((option) => {
-    option.selected = nextValues.includes(option.value);
-  });
-}
-
-function addNewItemTypeOption() {
-  const selectedCategory = fieldRefs.category.value;
-
-  if (!selectedCategory) {
-    setFeedback("Select a category before adding a new item type.");
-    fieldRefs.itemType.value = "";
-    return;
-  }
-
-  const rawValue = window.prompt("Add new item type");
-
-  if (!rawValue) {
-    fieldRefs.itemType.value = "";
-    return;
-  }
-
-  const targetArray = settingsData.itemTypesByCategory[selectedCategory] || [];
-  const storedValue = addUniqueOption(targetArray, rawValue);
-  settingsData.itemTypesByCategory[selectedCategory] = targetArray;
-  saveSettings();
-
-  refreshItemTypeOptions(false);
-
-  if (storedValue) {
-    fieldRefs.itemType.value = storedValue;
-  }
-}
-
-function handleSingleAddNew(event) {
-  const selectEl = event.currentTarget;
-
-  if (selectEl.value !== "__add_new__") return;
-
-  if (selectEl === fieldRefs.category) {
-    addNewSingleValueOption(
-      "categories",
-      fieldRefs.category,
-      "Add new category",
-      "Select category"
-    );
-    fieldRefs.itemType.value = "";
-    refreshItemTypeOptions(false);
-    evaluateProgression();
-    return;
-  }
-
-  if (selectEl === fieldRefs.itemType) {
-    addNewItemTypeOption();
-    evaluateProgression();
-    return;
-  }
-
-  if (selectEl === fieldRefs.brand) {
-    addNewSingleValueOption(
-      "brands",
-      fieldRefs.brand,
-      "Add new brand",
-      "Select brand"
-    );
-    evaluateProgression();
-    return;
-  }
-
-  if (selectEl === fieldRefs.sourceLocation) {
-    addNewSingleValueOption(
-      "sourceLocations",
-      fieldRefs.sourceLocation,
-      "Add new source location",
-      "Select source location"
-    );
-    evaluateProgression();
-  }
-}
-
-function handleMultiAddNew(event, settingsKey, promptLabel) {
-  const selectEl = event.currentTarget;
-  const containsAddNew = Array.from(selectEl.selectedOptions).some(
-    (option) => option.value === "__add_new__"
+  trigger.textContent = formatMultiTriggerLabel(fieldKey);
+  trigger.setAttribute(
+    "data-has-value",
+    String(multiState[fieldKey].length > 0)
   );
+}
 
-  if (!containsAddNew) return;
+function renderAllMultiSelects() {
+  Object.keys(multiConfig).forEach(renderMultiSelect);
+}
 
-  addNewMultiValueOption(settingsKey, selectEl, promptLabel);
-  evaluateProgression();
+function closeAllMultiPanels() {
+  document.querySelectorAll(".multi-select").forEach((multiEl) => {
+    multiEl.classList.remove("is-open");
+  });
+
+  document.querySelectorAll("[data-multi-panel]").forEach((panel) => {
+    panel.hidden = true;
+  });
+
+  document.querySelectorAll("[data-multi-trigger]").forEach((trigger) => {
+    trigger.setAttribute("aria-expanded", "false");
+  });
+}
+
+function openMultiPanel(fieldKey) {
+  closeAllMultiPanels();
+
+  const multiEl = document.querySelector(`.multi-select[data-field="${fieldKey}"]`);
+  const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
+  const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
+
+  if (!multiEl || !panel || !trigger) return;
+
+  multiEl.classList.add("is-open");
+  panel.hidden = false;
+  trigger.setAttribute("aria-expanded", "true");
+}
+
+function handleMultiAdd(fieldKey) {
+  const promptLabel = multiConfig[fieldKey].addPrompt;
+  if (!promptLabel) return;
+
+  const rawValue = window.prompt(promptLabel);
+  if (!rawValue) return;
+
+  const optionsKey = multiConfig[fieldKey].optionsKey;
+  const storedValue = addUniqueOption(settingsData[optionsKey], rawValue);
+  if (!storedValue) return;
+
+  if (!multiState[fieldKey].includes(storedValue)) {
+    multiState[fieldKey].push(storedValue);
+  }
+
+  renderMultiSelect(fieldKey);
 }
 
 // -----------------------------------------
-// Sequential reveal
+// Section state
 // -----------------------------------------
 
-function updateSectionVisibility() {
-  let firstIncompleteFound = false;
+function getSectionIndex(key) {
+  return sectionOrder.indexOf(key);
+}
 
-  formSections.forEach((section) => {
-    section.element.classList.remove("is-active", "is-complete");
+function isSectionComplete(key) {
+  if (key === "identity") {
+    return (
+      fieldRefs.name.value.trim() !== "" &&
+      fieldRefs.category.value !== "" &&
+      fieldRefs.itemType.value !== "" &&
+      multiState.colours.length > 0 &&
+      multiState.details.length > 0
+    );
+  }
 
-    const complete = section.isComplete();
+  if (key === "wearing") {
+    return multiState.contexts.length > 0 && multiState.styles.length > 0;
+  }
 
-    if (complete) {
-      section.element.classList.add("is-complete");
-      return;
+  if (key === "source") {
+    return (
+      fieldRefs.brand.value !== "" &&
+      fieldRefs.sourceType.value !== "" &&
+      fieldRefs.sourceLocation.value !== ""
+    );
+  }
+
+  if (key === "usage") {
+    return (
+      fieldRefs.wearFrequency.value !== "" &&
+      fieldRefs.estimatedValue.value !== "" &&
+      Number(fieldRefs.estimatedValue.value) >= 0 &&
+      fieldRefs.resaleWillingness.value !== ""
+    );
+  }
+
+  if (key === "emotion") {
+    return true;
+  }
+
+  return false;
+}
+
+function getUnlockedIndex() {
+  let unlockedIndex = 0;
+
+  for (let index = 0; index < sectionOrder.length; index += 1) {
+    const key = sectionOrder[index];
+    if (completedSections.has(key)) {
+      unlockedIndex = index + 1;
+    } else {
+      break;
     }
+  }
 
-    if (!firstIncompleteFound) {
-      section.element.classList.add("is-active");
-      firstIncompleteFound = true;
+  return Math.min(unlockedIndex, sectionOrder.length - 1);
+}
+
+function setActiveSection(key, scroll = false) {
+  const unlockedIndex = getUnlockedIndex();
+  const targetIndex = getSectionIndex(key);
+
+  if (targetIndex > unlockedIndex) return;
+
+  activeSectionKey = key;
+  renderSectionStates();
+
+  if (scroll) {
+    const targetSection = formSections[key];
+    targetSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function renderSectionStates() {
+  const unlockedIndex = getUnlockedIndex();
+
+  sectionOrder.forEach((key, index) => {
+    const sectionEl = formSections[key];
+    if (!sectionEl) return;
+
+    sectionEl.classList.remove("is-active", "is-complete");
+    sectionEl.style.pointerEvents = index <= unlockedIndex ? "auto" : "none";
+
+    if (key === activeSectionKey) {
+      sectionEl.classList.add("is-active");
+    } else if (completedSections.has(key)) {
+      sectionEl.classList.add("is-complete");
     }
   });
+
+  updatePlusPosition();
 }
 
-function evaluateProgression() {
-  const previousActive = formSections.find((section) =>
-    section.element.classList.contains("is-active")
-  );
+function updatePlusPosition() {
+  if (!addItemLayout || !addItemPlus) return;
 
-  updateSectionVisibility();
+  const activeSection = formSections[activeSectionKey];
+  if (!activeSection) return;
 
-  const currentActive = formSections.find((section) =>
-    section.element.classList.contains("is-active")
-  );
+  const sectionTop = activeSection.offsetTop;
+  const sectionHeight = activeSection.offsetHeight;
+  const plusHeight = addItemPlus.offsetHeight;
 
-  if (
-    previousActive &&
-    currentActive &&
-    previousActive.key !== currentActive.key
-  ) {
-    scrollToSection(currentActive.element);
+  const offset = Math.max(0, sectionTop + sectionHeight / 2 - plusHeight / 2);
+  addItemLayout.style.setProperty("--plus-offset", `${offset}px`);
+}
+
+function validateSection(key) {
+  if (key === "identity") {
+    if (fieldRefs.name.value.trim() === "") {
+      return "Item name is required.";
+    }
+    if (fieldRefs.category.value === "") {
+      return "Category is required.";
+    }
+    if (fieldRefs.itemType.value === "") {
+      return "Item type is required.";
+    }
+    if (multiState.colours.length === 0) {
+      return "Select at least one colour.";
+    }
+    if (multiState.details.length === 0) {
+      return "Select at least one detail.";
+    }
+    return null;
   }
+
+  if (key === "wearing") {
+    if (multiState.contexts.length === 0) {
+      return "Select at least one context.";
+    }
+    if (multiState.styles.length === 0) {
+      return "Select at least one style.";
+    }
+    return null;
+  }
+
+  if (key === "source") {
+    if (fieldRefs.brand.value === "") {
+      return "Brand is required.";
+    }
+    if (fieldRefs.sourceType.value === "") {
+      return "Source type is required.";
+    }
+    if (fieldRefs.sourceLocation.value === "") {
+      return "Source location is required.";
+    }
+    return null;
+  }
+
+  if (key === "usage") {
+    if (fieldRefs.wearFrequency.value === "") {
+      return "Wear frequency is required.";
+    }
+    if (
+      fieldRefs.estimatedValue.value === "" ||
+      Number(fieldRefs.estimatedValue.value) < 0
+    ) {
+      return "Estimated resale value must be a non-negative number.";
+    }
+    if (fieldRefs.resaleWillingness.value === "") {
+      return "Resale willingness is required.";
+    }
+    return null;
+  }
+
+  return null;
+}
+
+function continueSection(key) {
+  clearFeedback();
+
+  const error = validateSection(key);
+  if (error) {
+    setFeedback(error);
+    setActiveSection(key, true);
+    return;
+  }
+
+  completedSections.add(key);
+
+  const currentIndex = getSectionIndex(key);
+  const nextKey = sectionOrder[currentIndex + 1] || "emotion";
+
+  setActiveSection(nextKey, true);
 }
 
 // -----------------------------------------
-// Validation + item creation
+// Submission
 // -----------------------------------------
-
-function validateAddItemForm() {
-  const errors = [];
-
-  if (fieldRefs.name.value.trim() === "") {
-    errors.push("Item name is required.");
-  }
-
-  if (fieldRefs.category.value === "") {
-    errors.push("Category is required.");
-  }
-
-  if (fieldRefs.itemType.value === "") {
-    errors.push("Item type is required.");
-  }
-
-  if (getMultiSelectValues(fieldRefs.colours).length === 0) {
-    errors.push("Select at least one colour.");
-  }
-
-  if (getMultiSelectValues(fieldRefs.details).length === 0) {
-    errors.push("Select at least one detail.");
-  }
-
-  if (getMultiSelectValues(fieldRefs.contexts).length === 0) {
-    errors.push("Select at least one context.");
-  }
-
-  if (getMultiSelectValues(fieldRefs.styles).length === 0) {
-    errors.push("Select at least one style.");
-  }
-
-  if (fieldRefs.brand.value === "") {
-    errors.push("Brand is required.");
-  }
-
-  if (fieldRefs.sourceType.value === "") {
-    errors.push("Source type is required.");
-  }
-
-  if (fieldRefs.sourceLocation.value === "") {
-    errors.push("Source location is required.");
-  }
-
-  if (fieldRefs.wearFrequency.value === "") {
-    errors.push("Wear frequency is required.");
-  }
-
-  if (
-    fieldRefs.estimatedValue.value === "" ||
-    Number(fieldRefs.estimatedValue.value) < 0
-  ) {
-    errors.push("Estimated resale value must be a non-negative number.");
-  }
-
-  if (fieldRefs.resaleWillingness.value === "") {
-    errors.push("Resale willingness is required.");
-  }
-
-  return errors;
-}
 
 function buildItemFromForm() {
   const status =
@@ -867,10 +862,10 @@ function buildItemFromForm() {
     name: normalizeValue(fieldRefs.name.value),
     category: fieldRefs.category.value,
     itemType: fieldRefs.itemType.value,
-    colours: getMultiSelectValues(fieldRefs.colours),
-    details: getMultiSelectValues(fieldRefs.details),
-    contexts: getMultiSelectValues(fieldRefs.contexts),
-    styles: getMultiSelectValues(fieldRefs.styles),
+    colours: [...multiState.colours],
+    details: [...multiState.details],
+    contexts: [...multiState.contexts],
+    styles: [...multiState.styles],
     brand: fieldRefs.brand.value,
     sourceType: fieldRefs.sourceType.value,
     sourceChannel: deriveSourceChannel(fieldRefs.sourceType.value),
@@ -878,23 +873,46 @@ function buildItemFromForm() {
     wearFrequency: fieldRefs.wearFrequency.value,
     estimatedValue: Number(fieldRefs.estimatedValue.value),
     resaleWillingness: fieldRefs.resaleWillingness.value,
-    emotionalRating:
-      fieldRefs.emotionalRating.value !== ""
-        ? [fieldRefs.emotionalRating.value]
-        : null,
+    emotionalRating: multiState.emotionalRating.length
+      ? [...multiState.emotionalRating]
+      : null,
     status,
     dateAdded: nowISO(),
     dateUpdated: nowISO()
   };
 }
 
+function validateFullForm() {
+  const sectionKeys = ["identity", "wearing", "source", "usage"];
+
+  for (const key of sectionKeys) {
+    const error = validateSection(key);
+    if (error) {
+      return { key, error };
+    }
+  }
+
+  return null;
+}
+
 function resetAddItemForm() {
   addItemForm.reset();
   clearFeedback();
 
-  populateAllDropdowns();
-  refreshItemTypeOptions(false);
-  updateSectionVisibility();
+  multiState.colours = [];
+  multiState.details = [];
+  multiState.contexts = [];
+  multiState.styles = [];
+  multiState.emotionalRating = [];
+
+  completedSections.clear();
+  activeSectionKey = "identity";
+
+  populateSingleDropdowns();
+  refreshItemTypeOptions();
+  renderAllMultiSelects();
+  closeAllMultiPanels();
+  renderSectionStates();
 
   fieldRefs.name.focus();
 }
@@ -903,15 +921,10 @@ function handleAddItemSubmit(event) {
   event.preventDefault();
   clearFeedback();
 
-  const errors = validateAddItemForm();
-
-  if (errors.length > 0) {
-    setFeedback(errors[0]);
-    evaluateProgression();
-    const firstIncomplete = formSections.find((section) => !section.isComplete());
-    if (firstIncomplete) {
-      scrollToSection(firstIncomplete.element);
-    }
+  const validation = validateFullForm();
+  if (validation) {
+    setFeedback(validation.error);
+    setActiveSection(validation.key, true);
     return;
   }
 
@@ -929,120 +942,194 @@ function handleAddItemSubmit(event) {
 }
 
 // -----------------------------------------
-// Source defaults
+// Single-select add-new handling
 // -----------------------------------------
 
-function handleSourceTypeDefaults() {
-  const transferTypes = ["Hand-me-down", "Present"];
+function handleSelectAddNew(selectEl, settingsKey, placeholder) {
+  if (selectEl.value !== "__add_new__") return;
 
+  const rawValue = window.prompt(`Add new ${settingsKey}`);
+  if (!rawValue) {
+    selectEl.value = "";
+    return;
+  }
+
+  const storedValue = addUniqueOption(settingsData[settingsKey], rawValue);
+  populateSingleSelect(selectEl, settingsData[settingsKey], placeholder, true);
+
+  if (storedValue) {
+    selectEl.value = storedValue;
+  }
+}
+
+function handleCategoryChange() {
+  clearFeedback();
+
+  if (fieldRefs.category.value === "__add_new__") {
+    const rawValue = window.prompt("Add new category");
+    if (!rawValue) {
+      fieldRefs.category.value = "";
+      refreshItemTypeOptions();
+      return;
+    }
+
+    const storedValue = addUniqueOption(settingsData.categories, rawValue);
+    populateSingleSelect(
+      fieldRefs.category,
+      settingsData.categories,
+      "Select category",
+      true
+    );
+    if (storedValue) fieldRefs.category.value = storedValue;
+  }
+
+  fieldRefs.itemType.value = "";
+  refreshItemTypeOptions();
+}
+
+function handleItemTypeChange() {
+  clearFeedback();
+
+  if (fieldRefs.itemType.value !== "__add_new__") return;
+
+  const category = fieldRefs.category.value;
+  if (!category) {
+    setFeedback("Select a category before adding a new item type.");
+    fieldRefs.itemType.value = "";
+    return;
+  }
+
+  const rawValue = window.prompt("Add new item type");
+  if (!rawValue) {
+    fieldRefs.itemType.value = "";
+    return;
+  }
+
+  const targetArray = settingsData.itemTypesByCategory[category] || [];
+  const storedValue = addUniqueOption(targetArray, rawValue);
+  settingsData.itemTypesByCategory[category] = targetArray;
+  saveSettings();
+
+  refreshItemTypeOptions();
+  if (storedValue) fieldRefs.itemType.value = storedValue;
+}
+
+function handleSourceTypeChange() {
+  clearFeedback();
+
+  const transferTypes = ["Hand-me-down", "Present"];
   if (
     transferTypes.includes(fieldRefs.sourceType.value) &&
     fieldRefs.sourceLocation.value === ""
   ) {
     fieldRefs.sourceLocation.value = "Unknown";
   }
-
-  evaluateProgression();
 }
 
 // -----------------------------------------
 // Event wiring
 // -----------------------------------------
 
-function wireAddItemEvents() {
-  if (!addItemForm) return;
+function wireNavigation() {
+  navControls.forEach((control) => {
+    control.addEventListener("click", handleNavClick);
+  });
+}
 
-  fieldRefs.name.addEventListener("input", evaluateProgression);
-
-  fieldRefs.category.addEventListener("change", () => {
-    clearFeedback();
-    handleSingleAddNew({ currentTarget: fieldRefs.category });
-
-    if (fieldRefs.category.value !== "__add_new__") {
-      fieldRefs.itemType.value = "";
-      refreshItemTypeOptions(false);
-    }
-
-    evaluateProgression();
+function wireSectionEvents() {
+  document.querySelectorAll("[data-continue-section]").forEach((button) => {
+    button.addEventListener("click", () => {
+      continueSection(button.dataset.continueSection);
+    });
   });
 
-  fieldRefs.itemType.addEventListener("change", () => {
-    clearFeedback();
-    handleSingleAddNew({ currentTarget: fieldRefs.itemType });
-    evaluateProgression();
-  });
+  sectionOrder.forEach((key) => {
+    const sectionEl = formSections[key];
+    if (!sectionEl) return;
 
-  fieldRefs.colours.addEventListener("change", (event) => {
-    clearFeedback();
-    handleMultiAddNew(event, "colours", "Add new colour");
-    evaluateProgression();
+    sectionEl.addEventListener("click", () => {
+      if (completedSections.has(key) || key === activeSectionKey) {
+        setActiveSection(key, false);
+      }
+    });
   });
+}
 
-  fieldRefs.details.addEventListener("change", (event) => {
-    clearFeedback();
-    handleMultiAddNew(event, "details", "Add new detail");
-    evaluateProgression();
-  });
-
-  fieldRefs.contexts.addEventListener("change", (event) => {
-    clearFeedback();
-    handleMultiAddNew(event, "contexts", "Add new context");
-    evaluateProgression();
-  });
-
-  fieldRefs.styles.addEventListener("change", (event) => {
-    clearFeedback();
-    handleMultiAddNew(event, "styles", "Add new style");
-    evaluateProgression();
-  });
+function wireSingleSelects() {
+  fieldRefs.category.addEventListener("change", handleCategoryChange);
+  fieldRefs.itemType.addEventListener("change", handleItemTypeChange);
 
   fieldRefs.brand.addEventListener("change", () => {
-    clearFeedback();
-    handleSingleAddNew({ currentTarget: fieldRefs.brand });
-    evaluateProgression();
-  });
-
-  fieldRefs.sourceType.addEventListener("change", () => {
-    clearFeedback();
-    handleSourceTypeDefaults();
+    handleSelectAddNew(fieldRefs.brand, "brands", "Select brand");
   });
 
   fieldRefs.sourceLocation.addEventListener("change", () => {
-    clearFeedback();
-    handleSingleAddNew({ currentTarget: fieldRefs.sourceLocation });
-    evaluateProgression();
+    handleSelectAddNew(
+      fieldRefs.sourceLocation,
+      "sourceLocations",
+      "Select source location"
+    );
   });
 
-  fieldRefs.wearFrequency.addEventListener("change", evaluateProgression);
-  fieldRefs.estimatedValue.addEventListener("input", evaluateProgression);
-  fieldRefs.resaleWillingness.addEventListener("change", evaluateProgression);
-  fieldRefs.emotionalRating.addEventListener("change", evaluateProgression);
+  fieldRefs.sourceType.addEventListener("change", handleSourceTypeChange);
+}
+
+function wireMultiSelects() {
+  document.querySelectorAll("[data-multi-trigger]").forEach((trigger) => {
+    trigger.addEventListener("click", () => {
+      const fieldKey = trigger.dataset.multiTrigger;
+      openMultiPanel(fieldKey);
+    });
+  });
+
+  document.querySelectorAll("[data-multi-save]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const fieldKey = button.dataset.multiSave;
+      renderMultiSelect(fieldKey);
+      closeAllMultiPanels();
+    });
+  });
+
+  document.querySelectorAll("[data-multi-add]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const fieldKey = button.dataset.multiAdd;
+      handleMultiAdd(fieldKey);
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    const clickedInside = event.target.closest(".multi-select");
+    if (!clickedInside) {
+      closeAllMultiPanels();
+      renderAllMultiSelects();
+    }
+  });
+}
+
+function initAddItemForm() {
+  if (!addItemForm) return;
+
+  populateSingleDropdowns();
+  refreshItemTypeOptions();
+  renderAllMultiSelects();
+  closeAllMultiPanels();
+  renderSectionStates();
+
+  wireSectionEvents();
+  wireSingleSelects();
+  wireMultiSelects();
 
   addItemForm.addEventListener("submit", handleAddItemSubmit);
+
+  window.addEventListener("resize", updatePlusPosition);
 }
 
 // -----------------------------------------
 // App Init
 // -----------------------------------------
 
-function initNavigation() {
-  navControls.forEach((control) => {
-    control.addEventListener("click", handleNavClick);
-  });
-
-  showSection("add-item");
-}
-
-function initAddItemForm() {
-  if (!addItemForm) return;
-
-  populateAllDropdowns();
-  refreshItemTypeOptions(false);
-  updateSectionVisibility();
-  wireAddItemEvents();
-}
-
 document.addEventListener("DOMContentLoaded", () => {
-  initNavigation();
+  wireNavigation();
+  showSection("add-item");
   initAddItemForm();
 });

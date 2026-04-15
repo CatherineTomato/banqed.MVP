@@ -611,3 +611,203 @@ textarea:focus-visible {
   font-size: 0.95rem;
   color: var(--color-text-muted);
 }
+/* =========================================
+   Add Item workflow refinements
+   ========================================= */
+
+.brand-link::after,
+.brand-link.active::after {
+  display: none !important;
+}
+
+.nav-button--plus {
+  font-size: 2.5rem;
+  line-height: 1;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.page-shell--form .page-shell__body {
+  overflow: visible;
+}
+
+.add-item-layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: var(--space-7);
+  align-items: start;
+  max-width: var(--max-width-form);
+  --plus-offset: 0px;
+}
+
+.add-item-layout__aside {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 140px;
+  height: 100%;
+  pointer-events: none;
+}
+
+.add-item-plus {
+  position: absolute;
+  top: var(--plus-offset);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 6rem;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-text);
+  transition: top 0.25s ease;
+}
+
+.add-item-layout__main {
+  grid-column: 2;
+  display: grid;
+  gap: var(--space-6);
+}
+
+.form-section {
+  opacity: 0.14;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.form-section.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.form-section.is-complete {
+  opacity: 0.18;
+  pointer-events: auto;
+}
+
+.form-section__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.button-secondary {
+  min-height: 2.8rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--color-border-input);
+  background: transparent;
+  font-weight: 700;
+}
+
+.button-secondary:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.multi-select {
+  position: relative;
+}
+
+.multi-select__trigger {
+  width: 100%;
+  min-height: 2.6rem;
+  border: 1px solid var(--color-border-input);
+  background: transparent;
+  color: var(--color-text);
+  padding: 0.45rem 0.7rem;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.multi-select__trigger::after {
+  content: "▾";
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.multi-select.is-open .multi-select__trigger::after {
+  content: "▴";
+}
+
+.multi-select__panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  border: 1px solid var(--color-border-input);
+  background: var(--color-bg);
+  padding: 0.4rem;
+}
+
+.multi-select__options {
+  display: grid;
+  gap: 0.2rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+.multi-select__option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.35rem;
+  cursor: pointer;
+}
+
+.multi-select__option:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.multi-select__option input {
+  margin: 0;
+}
+
+.multi-select__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.multi-select__save,
+.multi-select__add {
+  min-height: 2.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--color-border-input);
+  font-weight: 700;
+}
+
+.multi-select__save {
+  background: var(--color-accent);
+  margin-left: auto;
+}
+
+.form-feedback {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 1100px) {
+  .add-item-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .add-item-layout__aside {
+    position: static;
+    width: auto;
+    height: auto;
+    pointer-events: none;
+  }
+
+  .add-item-plus {
+    position: static;
+    transform: none;
+    font-size: 4rem;
+  }
+
+  .add-item-layout__main {
+    grid-column: auto;
+  }
+}
