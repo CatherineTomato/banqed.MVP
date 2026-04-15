@@ -590,3 +590,24 @@ textarea:focus-visible {
 .form-field select option[value="__add_new__"] {
   font-style: italic;
 }
+/* =========================================
+   Add Item workflow state
+   ========================================= */
+
+.form-section {
+  opacity: 0.42;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.form-section.is-active,
+.form-section.is-complete {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.form-feedback {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}

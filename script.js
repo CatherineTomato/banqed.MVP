@@ -1,6 +1,6 @@
 // =========================================
 // banqed MVP - App Shell + Settings + Items
-// Add Item flow implementation
+// Add Item page implementation
 // =========================================
 
 // -----------------------------------------
@@ -228,6 +228,19 @@ const defaultSettingsData = {
     "Asymmetric straps"
   ],
 
+  contexts: [
+    "Everyday",
+    "Work",
+    "Smart casual",
+    "Formal",
+    "Party / nightlife",
+    "Gym / active",
+    "Lounging",
+    "Holiday",
+    "Special occasion",
+    "Pub"
+  ],
+
   styles: [
     "Office",
     "Party",
@@ -245,20 +258,8 @@ const defaultSettingsData = {
     "Chic"
   ],
 
-  contexts: [
-    "Everyday",
-    "Work",
-    "Smart casual",
-    "Formal",
-    "Party / nightlife",
-    "Gym / active",
-    "Lounging",
-    "Holiday",
-    "Special occasion",
-    "Pub"
-  ],
-
   brands: [
+    "No brand identified",
     "Alo",
     "Adidas",
     "Mango",
@@ -283,6 +284,7 @@ const defaultSettingsData = {
   ],
 
   sourceLocations: [
+    "Unknown",
     "Dublin",
     "Paris",
     "London",
@@ -323,7 +325,8 @@ const defaultSettingsData = {
 };
 
 const settingsData =
-  JSON.parse(localStorage.getItem("settings")) || structuredClone(defaultSettingsData);
+  JSON.parse(localStorage.getItem("settings")) ||
+  structuredClone(defaultSettingsData);
 
 function saveSettings() {
   localStorage.setItem("settings", JSON.stringify(settingsData));
@@ -371,17 +374,23 @@ const formSections = [
       fieldRefs.name.value.trim() !== "" &&
       fieldRefs.category.value !== "" &&
       fieldRefs.itemType.value !== "" &&
-      getMultiSelectValues(fieldRefs.colours).length > 0
+      getMultiSelectValues(fieldRefs.colours).length > 0 &&
+      getMultiSelectValues(fieldRefs.details).length > 0
   },
   {
     key: "wearing",
     element: document.getElementById("section-wearing"),
-    isComplete: () => true
+    isComplete: () =>
+      getMultiSelectValues(fieldRefs.contexts).length > 0 &&
+      getMultiSelectValues(fieldRefs.styles).length > 0
   },
   {
     key: "source",
     element: document.getElementById("section-source"),
-    isComplete: () => true
+    isComplete: () =>
+      fieldRefs.brand.value !== "" &&
+      fieldRefs.sourceType.value !== "" &&
+      fieldRefs.sourceLocation.value !== ""
   },
   {
     key: "usage",
@@ -389,6 +398,7 @@ const formSections = [
     isComplete: () =>
       fieldRefs.wearFrequency.value !== "" &&
       fieldRefs.estimatedValue.value !== "" &&
+      Number(fieldRefs.estimatedValue.value) >= 0 &&
       fieldRefs.resaleWillingness.value !== ""
   },
   {
@@ -432,15 +442,11 @@ function deriveSourceChannel(sourceType) {
 }
 
 function clearFeedback() {
-  if (feedbackEl) {
-    feedbackEl.textContent = "";
-  }
+  if (feedbackEl) feedbackEl.textContent = "";
 }
 
 function setFeedback(message) {
-  if (feedbackEl) {
-    feedbackEl.textContent = message;
-  }
+  if (feedbackEl) feedbackEl.textContent = message;
 }
 
 function scrollToSection(sectionEl) {
@@ -450,6 +456,31 @@ function scrollToSection(sectionEl) {
     behavior: "smooth",
     block: "start"
   });
+}
+
+function sortCaseInsensitive(values) {
+  values.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+}
+
+function addUniqueOption(targetArray, newValue) {
+  const normalized = normalizeValue(newValue);
+  if (!normalized) return null;
+
+  const exists = targetArray.some(
+    (item) => item.toLowerCase() === normalized.toLowerCase()
+  );
+
+  if (!exists) {
+    targetArray.push(normalized);
+    sortCaseInsensitive(targetArray);
+    saveSettings();
+  }
+
+  const match = targetArray.find(
+    (item) => item.toLowerCase() === normalized.toLowerCase()
+  );
+
+  return match || normalized;
 }
 
 // -----------------------------------------
@@ -497,22 +528,24 @@ function populateSelect(selectEl, options, config = {}) {
         option.selected = previousValues.includes(option.value);
       });
     } else {
-      const matchExists = Array.from(selectEl.options).some(
-        (option) => option.value === previousValues[0]
+      const previousValue = previousValues[0];
+      const exists = Array.from(selectEl.options).some(
+        (option) => option.value === previousValue
       );
-
-      selectEl.value = matchExists ? previousValues[0] : "";
+      selectEl.value = exists ? previousValue : "";
     }
   }
 }
 
 function populateAllDropdowns() {
   populateSelect(fieldRefs.category, settingsData.categories, {
-    placeholder: "Select category"
+    placeholder: "Select category",
+    includeAddNew: true
   });
 
   populateSelect(fieldRefs.itemType, [], {
-    placeholder: "Select item type"
+    placeholder: "Select item type",
+    includeAddNew: true
   });
 
   populateSelect(fieldRefs.colours, settingsData.colours, {
@@ -566,13 +599,15 @@ function populateAllDropdowns() {
   });
 }
 
-function refreshItemTypeOptions() {
+function refreshItemTypeOptions(preserve = false) {
   const selectedCategory = fieldRefs.category.value;
   const itemTypeOptions =
     settingsData.itemTypesByCategory[selectedCategory] || [];
 
   populateSelect(fieldRefs.itemType, itemTypeOptions, {
-    placeholder: "Select item type"
+    placeholder: "Select item type",
+    includeAddNew: true,
+    preserveValue: preserve
   });
 }
 
@@ -580,7 +615,7 @@ function refreshItemTypeOptions() {
 // Add-new behaviour
 // -----------------------------------------
 
-function addNewSingleValueOption(settingsKey, selectEl, promptLabel) {
+function addNewSingleValueOption(settingsKey, selectEl, promptLabel, placeholder) {
   const rawValue = window.prompt(promptLabel);
 
   if (!rawValue) {
@@ -588,59 +623,35 @@ function addNewSingleValueOption(settingsKey, selectEl, promptLabel) {
     return;
   }
 
-  const newValue = normalizeValue(rawValue);
-
-  if (!newValue) {
-    selectEl.value = "";
-    return;
-  }
-
-  const alreadyExists = settingsData[settingsKey].includes(newValue);
-
-  if (!alreadyExists) {
-    settingsData[settingsKey].push(newValue);
-    settingsData[settingsKey].sort((a, b) => a.localeCompare(b));
-    saveSettings();
-  }
+  const storedValue = addUniqueOption(settingsData[settingsKey], rawValue);
 
   populateSelect(selectEl, settingsData[settingsKey], {
-    placeholder: selectEl.querySelector('option[value=""]')
-      ? selectEl.querySelector('option[value=""]').textContent
-      : null,
+    placeholder,
     includeAddNew: true
   });
 
-  selectEl.value = newValue;
+  if (storedValue) {
+    selectEl.value = storedValue;
+  }
 }
 
 function addNewMultiValueOption(settingsKey, selectEl, promptLabel) {
   const rawValue = window.prompt(promptLabel);
 
   if (!rawValue) {
-    Array.from(selectEl.options).forEach((option) => {
-      if (option.value === "__add_new__") {
-        option.selected = false;
-      }
+    populateSelect(selectEl, settingsData[settingsKey], {
+      includeAddNew: true,
+      multi: true,
+      preserveValue: true
     });
     return;
   }
 
-  const newValue = normalizeValue(rawValue);
-
-  if (!newValue) {
-    return;
-  }
-
-  const alreadyExists = settingsData[settingsKey].includes(newValue);
-
-  if (!alreadyExists) {
-    settingsData[settingsKey].push(newValue);
-    settingsData[settingsKey].sort((a, b) => a.localeCompare(b));
-    saveSettings();
-  }
-
+  const storedValue = addUniqueOption(settingsData[settingsKey], rawValue);
   const previousValues = getMultiSelectValues(selectEl);
-  const nextValues = Array.from(new Set([...previousValues, newValue]));
+  const nextValues = storedValue
+    ? Array.from(new Set([...previousValues, storedValue]))
+    : previousValues;
 
   populateSelect(selectEl, settingsData[settingsKey], {
     includeAddNew: true,
@@ -652,63 +663,90 @@ function addNewMultiValueOption(settingsKey, selectEl, promptLabel) {
   });
 }
 
-function handleAddNewSelections(event) {
-  const selectEl = event.currentTarget;
-  const selectedValue = selectEl.value;
-  const selectedValues = getMultiSelectValues(selectEl);
+function addNewItemTypeOption() {
+  const selectedCategory = fieldRefs.category.value;
 
-  if (selectEl === fieldRefs.brand && selectedValue === "__add_new__") {
-    addNewSingleValueOption("brands", fieldRefs.brand, "Add new brand");
+  if (!selectedCategory) {
+    setFeedback("Select a category before adding a new item type.");
+    fieldRefs.itemType.value = "";
+    return;
   }
 
-  if (
-    selectEl === fieldRefs.sourceLocation &&
-    selectedValue === "__add_new__"
-  ) {
+  const rawValue = window.prompt("Add new item type");
+
+  if (!rawValue) {
+    fieldRefs.itemType.value = "";
+    return;
+  }
+
+  const targetArray = settingsData.itemTypesByCategory[selectedCategory] || [];
+  const storedValue = addUniqueOption(targetArray, rawValue);
+  settingsData.itemTypesByCategory[selectedCategory] = targetArray;
+  saveSettings();
+
+  refreshItemTypeOptions(false);
+
+  if (storedValue) {
+    fieldRefs.itemType.value = storedValue;
+  }
+}
+
+function handleSingleAddNew(event) {
+  const selectEl = event.currentTarget;
+
+  if (selectEl.value !== "__add_new__") return;
+
+  if (selectEl === fieldRefs.category) {
+    addNewSingleValueOption(
+      "categories",
+      fieldRefs.category,
+      "Add new category",
+      "Select category"
+    );
+    fieldRefs.itemType.value = "";
+    refreshItemTypeOptions(false);
+    evaluateProgression();
+    return;
+  }
+
+  if (selectEl === fieldRefs.itemType) {
+    addNewItemTypeOption();
+    evaluateProgression();
+    return;
+  }
+
+  if (selectEl === fieldRefs.brand) {
+    addNewSingleValueOption(
+      "brands",
+      fieldRefs.brand,
+      "Add new brand",
+      "Select brand"
+    );
+    evaluateProgression();
+    return;
+  }
+
+  if (selectEl === fieldRefs.sourceLocation) {
     addNewSingleValueOption(
       "sourceLocations",
       fieldRefs.sourceLocation,
-      "Add new source location"
+      "Add new source location",
+      "Select source location"
     );
+    evaluateProgression();
   }
+}
 
-  if (
-    selectEl === fieldRefs.colours &&
-    Array.from(selectEl.selectedOptions).some(
-      (option) => option.value === "__add_new__"
-    )
-  ) {
-    addNewMultiValueOption("colours", fieldRefs.colours, "Add new colour");
-  }
+function handleMultiAddNew(event, settingsKey, promptLabel) {
+  const selectEl = event.currentTarget;
+  const containsAddNew = Array.from(selectEl.selectedOptions).some(
+    (option) => option.value === "__add_new__"
+  );
 
-  if (
-    selectEl === fieldRefs.details &&
-    Array.from(selectEl.selectedOptions).some(
-      (option) => option.value === "__add_new__"
-    )
-  ) {
-    addNewMultiValueOption("details", fieldRefs.details, "Add new detail");
-  }
+  if (!containsAddNew) return;
 
-  if (
-    selectEl === fieldRefs.contexts &&
-    Array.from(selectEl.selectedOptions).some(
-      (option) => option.value === "__add_new__"
-    )
-  ) {
-    addNewMultiValueOption("contexts", fieldRefs.contexts, "Add new context");
-  }
-
-  if (
-    selectEl === fieldRefs.styles &&
-    Array.from(selectEl.selectedOptions).some(
-      (option) => option.value === "__add_new__"
-    )
-  ) {
-    addNewMultiValueOption("styles", fieldRefs.styles, "Add new style");
-  }
-
-  return selectedValues;
+  addNewMultiValueOption(settingsKey, selectEl, promptLabel);
+  evaluateProgression();
 }
 
 // -----------------------------------------
@@ -716,57 +754,42 @@ function handleAddNewSelections(event) {
 // -----------------------------------------
 
 function updateSectionVisibility() {
-  let foundIncomplete = false;
+  let firstIncompleteFound = false;
 
-  formSections.forEach((section, index) => {
-    const isComplete = section.isComplete();
-    const isFirst = index === 0;
+  formSections.forEach((section) => {
+    section.element.classList.remove("is-active", "is-complete");
 
-    section.element.classList.remove("is-active", "is-complete", "is-hidden");
+    const complete = section.isComplete();
 
-    if (!foundIncomplete) {
-      if (isComplete) {
-        section.element.classList.add("is-complete");
-      } else {
-        section.element.classList.add("is-active");
-        foundIncomplete = true;
-      }
-    } else {
-      section.element.classList.add("is-hidden");
+    if (complete) {
+      section.element.classList.add("is-complete");
+      return;
     }
 
-    if (isFirst && !section.isComplete()) {
+    if (!firstIncompleteFound) {
       section.element.classList.add("is-active");
-      section.element.classList.remove("is-complete");
+      firstIncompleteFound = true;
     }
   });
 }
 
-function moveToNextIncompleteSection() {
-  const nextSection = formSections.find((section) => !section.isComplete());
-
-  if (nextSection) {
-    scrollToSection(nextSection.element);
-  }
-}
-
 function evaluateProgression() {
-  const previousVisibleIncomplete = formSections.find((section) =>
+  const previousActive = formSections.find((section) =>
     section.element.classList.contains("is-active")
   );
 
   updateSectionVisibility();
 
-  const currentVisibleIncomplete = formSections.find((section) =>
+  const currentActive = formSections.find((section) =>
     section.element.classList.contains("is-active")
   );
 
   if (
-    previousVisibleIncomplete &&
-    currentVisibleIncomplete &&
-    previousVisibleIncomplete.key !== currentVisibleIncomplete.key
+    previousActive &&
+    currentActive &&
+    previousActive.key !== currentActive.key
   ) {
-    scrollToSection(currentVisibleIncomplete.element);
+    scrollToSection(currentActive.element);
   }
 }
 
@@ -775,27 +798,69 @@ function evaluateProgression() {
 // -----------------------------------------
 
 function validateAddItemForm() {
-  const nameValid = fieldRefs.name.value.trim() !== "";
-  const categoryValid = fieldRefs.category.value !== "";
-  const itemTypeValid = fieldRefs.itemType.value !== "";
-  const coloursValid = getMultiSelectValues(fieldRefs.colours).length > 0;
-  const wearFrequencyValid = fieldRefs.wearFrequency.value !== "";
-  const estimatedValueValid = fieldRefs.estimatedValue.value !== "";
-  const resaleWillingnessValid = fieldRefs.resaleWillingness.value !== "";
+  const errors = [];
 
-  return (
-    nameValid &&
-    categoryValid &&
-    itemTypeValid &&
-    coloursValid &&
-    wearFrequencyValid &&
-    estimatedValueValid &&
-    resaleWillingnessValid
-  );
+  if (fieldRefs.name.value.trim() === "") {
+    errors.push("Item name is required.");
+  }
+
+  if (fieldRefs.category.value === "") {
+    errors.push("Category is required.");
+  }
+
+  if (fieldRefs.itemType.value === "") {
+    errors.push("Item type is required.");
+  }
+
+  if (getMultiSelectValues(fieldRefs.colours).length === 0) {
+    errors.push("Select at least one colour.");
+  }
+
+  if (getMultiSelectValues(fieldRefs.details).length === 0) {
+    errors.push("Select at least one detail.");
+  }
+
+  if (getMultiSelectValues(fieldRefs.contexts).length === 0) {
+    errors.push("Select at least one context.");
+  }
+
+  if (getMultiSelectValues(fieldRefs.styles).length === 0) {
+    errors.push("Select at least one style.");
+  }
+
+  if (fieldRefs.brand.value === "") {
+    errors.push("Brand is required.");
+  }
+
+  if (fieldRefs.sourceType.value === "") {
+    errors.push("Source type is required.");
+  }
+
+  if (fieldRefs.sourceLocation.value === "") {
+    errors.push("Source location is required.");
+  }
+
+  if (fieldRefs.wearFrequency.value === "") {
+    errors.push("Wear frequency is required.");
+  }
+
+  if (
+    fieldRefs.estimatedValue.value === "" ||
+    Number(fieldRefs.estimatedValue.value) < 0
+  ) {
+    errors.push("Estimated resale value must be a non-negative number.");
+  }
+
+  if (fieldRefs.resaleWillingness.value === "") {
+    errors.push("Resale willingness is required.");
+  }
+
+  return errors;
 }
 
 function buildItemFromForm() {
-  const resaleWillingness = fieldRefs.resaleWillingness.value;
+  const status =
+    fieldRefs.resaleWillingness.value === "Sell now" ? "sales" : "wardrobe";
 
   return {
     id: generateId(),
@@ -806,15 +871,18 @@ function buildItemFromForm() {
     details: getMultiSelectValues(fieldRefs.details),
     contexts: getMultiSelectValues(fieldRefs.contexts),
     styles: getMultiSelectValues(fieldRefs.styles),
-    brand: fieldRefs.brand.value || null,
-    sourceType: fieldRefs.sourceType.value || null,
-    sourceChannel: deriveSourceChannel(fieldRefs.sourceType.value || ""),
-    sourceLocation: fieldRefs.sourceLocation.value || null,
+    brand: fieldRefs.brand.value,
+    sourceType: fieldRefs.sourceType.value,
+    sourceChannel: deriveSourceChannel(fieldRefs.sourceType.value),
+    sourceLocation: fieldRefs.sourceLocation.value,
     wearFrequency: fieldRefs.wearFrequency.value,
     estimatedValue: Number(fieldRefs.estimatedValue.value),
-    resaleWillingness,
-    emotionalRating: fieldRefs.emotionalRating.value || null,
-    lifecycleState: resaleWillingness === "Sell now" ? "sales" : "wardrobe",
+    resaleWillingness: fieldRefs.resaleWillingness.value,
+    emotionalRating:
+      fieldRefs.emotionalRating.value !== ""
+        ? [fieldRefs.emotionalRating.value]
+        : null,
+    status,
     dateAdded: nowISO(),
     dateUpdated: nowISO()
   };
@@ -822,11 +890,11 @@ function buildItemFromForm() {
 
 function resetAddItemForm() {
   addItemForm.reset();
+  clearFeedback();
 
   populateAllDropdowns();
-  refreshItemTypeOptions();
+  refreshItemTypeOptions(false);
   updateSectionVisibility();
-  clearFeedback();
 
   fieldRefs.name.focus();
 }
@@ -835,26 +903,46 @@ function handleAddItemSubmit(event) {
   event.preventDefault();
   clearFeedback();
 
-  if (!validateAddItemForm()) {
-    setFeedback("Please complete all required fields before adding the item.");
-    moveToNextIncompleteSection();
+  const errors = validateAddItemForm();
+
+  if (errors.length > 0) {
+    setFeedback(errors[0]);
+    evaluateProgression();
+    const firstIncomplete = formSections.find((section) => !section.isComplete());
+    if (firstIncomplete) {
+      scrollToSection(firstIncomplete.element);
+    }
     return;
   }
 
   const newItem = buildItemFromForm();
-
   items.push(newItem);
   saveItems();
 
-  const destination =
-    newItem.lifecycleState === "sales" ? "sales" : "wardrobe";
+  const message =
+    newItem.status === "sales"
+      ? "Item added to sales."
+      : "Item added to wardrobe.";
 
   resetAddItemForm();
-  setFeedback(
-    destination === "sales"
-      ? "Item added to sales."
-      : "Item added to wardrobe."
-  );
+  setFeedback(message);
+}
+
+// -----------------------------------------
+// Source defaults
+// -----------------------------------------
+
+function handleSourceTypeDefaults() {
+  const transferTypes = ["Hand-me-down", "Present"];
+
+  if (
+    transferTypes.includes(fieldRefs.sourceType.value) &&
+    fieldRefs.sourceLocation.value === ""
+  ) {
+    fieldRefs.sourceLocation.value = "Unknown";
+  }
+
+  evaluateProgression();
 }
 
 // -----------------------------------------
@@ -864,26 +952,67 @@ function handleAddItemSubmit(event) {
 function wireAddItemEvents() {
   if (!addItemForm) return;
 
-  fieldRefs.category.addEventListener("change", () => {
-    refreshItemTypeOptions();
-    evaluateProgression();
-  });
-
-  fieldRefs.itemType.addEventListener("change", evaluateProgression);
   fieldRefs.name.addEventListener("input", evaluateProgression);
-  fieldRefs.colours.addEventListener("change", (event) => {
-    handleAddNewSelections(event);
+
+  fieldRefs.category.addEventListener("change", () => {
+    clearFeedback();
+    handleSingleAddNew({ currentTarget: fieldRefs.category });
+
+    if (fieldRefs.category.value !== "__add_new__") {
+      fieldRefs.itemType.value = "";
+      refreshItemTypeOptions(false);
+    }
+
     evaluateProgression();
   });
 
-  fieldRefs.details.addEventListener("change", handleAddNewSelections);
-  fieldRefs.contexts.addEventListener("change", handleAddNewSelections);
-  fieldRefs.styles.addEventListener("change", handleAddNewSelections);
+  fieldRefs.itemType.addEventListener("change", () => {
+    clearFeedback();
+    handleSingleAddNew({ currentTarget: fieldRefs.itemType });
+    evaluateProgression();
+  });
 
-  fieldRefs.brand.addEventListener("change", handleAddNewSelections);
-  fieldRefs.sourceLocation.addEventListener("change", handleAddNewSelections);
+  fieldRefs.colours.addEventListener("change", (event) => {
+    clearFeedback();
+    handleMultiAddNew(event, "colours", "Add new colour");
+    evaluateProgression();
+  });
 
-  fieldRefs.sourceType.addEventListener("change", evaluateProgression);
+  fieldRefs.details.addEventListener("change", (event) => {
+    clearFeedback();
+    handleMultiAddNew(event, "details", "Add new detail");
+    evaluateProgression();
+  });
+
+  fieldRefs.contexts.addEventListener("change", (event) => {
+    clearFeedback();
+    handleMultiAddNew(event, "contexts", "Add new context");
+    evaluateProgression();
+  });
+
+  fieldRefs.styles.addEventListener("change", (event) => {
+    clearFeedback();
+    handleMultiAddNew(event, "styles", "Add new style");
+    evaluateProgression();
+  });
+
+  fieldRefs.brand.addEventListener("change", () => {
+    clearFeedback();
+    handleSingleAddNew({ currentTarget: fieldRefs.brand });
+    evaluateProgression();
+  });
+
+  fieldRefs.sourceType.addEventListener("change", () => {
+    clearFeedback();
+    handleSourceTypeDefaults();
+  });
+
+  fieldRefs.sourceLocation.addEventListener("change", () => {
+    clearFeedback();
+    handleSingleAddNew({ currentTarget: fieldRefs.sourceLocation });
+    evaluateProgression();
+  });
+
   fieldRefs.wearFrequency.addEventListener("change", evaluateProgression);
   fieldRefs.estimatedValue.addEventListener("input", evaluateProgression);
   fieldRefs.resaleWillingness.addEventListener("change", evaluateProgression);
@@ -893,7 +1022,7 @@ function wireAddItemEvents() {
 }
 
 // -----------------------------------------
-// App init
+// App Init
 // -----------------------------------------
 
 function initNavigation() {
@@ -908,7 +1037,7 @@ function initAddItemForm() {
   if (!addItemForm) return;
 
   populateAllDropdowns();
-  refreshItemTypeOptions();
+  refreshItemTypeOptions(false);
   updateSectionVisibility();
   wireAddItemEvents();
 }
