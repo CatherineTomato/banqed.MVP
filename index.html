@@ -465,26 +465,99 @@
   </div>
 </section>
 
-    <section
-      id="wardrobe"
-      class="app-section"
-      aria-labelledby="wardrobe-title"
-      data-view="wardrobe"
-    >
-      <div class="page-shell">
-        <div class="page-shell__intro">
-          <p class="page-kicker">banqed</p>
-          <h1 id="wardrobe-title" class="page-title">Wardrobe</h1>
-          <p class="page-description">
-            Inventory view over items with status = "wardrobe".
+<section
+  id="wardrobe"
+  class="app-section"
+  aria-labelledby="wardrobe-title"
+  data-view="wardrobe"
+>
+  <div class="wardrobe-page">
+    <div class="wardrobe-page__header">
+      <div class="wardrobe-page__title-block">
+        <h1 id="wardrobe-title" class="wardrobe-page__title">Wardrobe</h1>
+
+        <div class="wardrobe-page__metrics">
+          <p class="wardrobe-page__metric">
+            <span id="wardrobe-item-count">0</span> items
+          </p>
+          <p class="wardrobe-page__metric">
+            <span id="wardrobe-total-value">€0</span> estimated resale value
           </p>
         </div>
-
-        <div class="page-shell__body">
-          <p>Step 1 shell placeholder for Wardrobe.</p>
-        </div>
       </div>
-    </section>
+
+      <div class="wardrobe-page__controls">
+        <button
+          type="button"
+          class="wardrobe-page__control-button"
+          aria-label="Filter wardrobe items"
+        >
+          Filter
+        </button>
+
+        <button
+          type="button"
+          class="wardrobe-page__control-button"
+          aria-label="Sort wardrobe items"
+        >
+          Sort
+        </button>
+
+        <button
+          type="button"
+          class="wardrobe-page__add-button"
+          data-section="add-item"
+          aria-label="Add item"
+        >
+          +
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="wardrobe-empty-state"
+      class="wardrobe-empty-state"
+      hidden
+      aria-live="polite"
+    >
+      <p class="wardrobe-empty-state__title">No items in your wardrobe yet.</p>
+      <p class="wardrobe-empty-state__text">
+        Add your first item to begin building your wardrobe inventory.
+      </p>
+      <button
+        type="button"
+        class="button-primary wardrobe-empty-state__button"
+        data-section="add-item"
+      >
+        Add item
+      </button>
+    </div>
+
+    <div id="wardrobe-table-wrap" class="wardrobe-table-wrap">
+      <table class="wardrobe-table">
+        <thead>
+          <tr>
+            <th scope="col">Item</th>
+            <th scope="col">Colour</th>
+            <th scope="col">Detail</th>
+            <th scope="col">Context</th>
+            <th scope="col">Style</th>
+            <th scope="col">Brand</th>
+            <th scope="col">Source</th>
+            <th scope="col">Wear frequency</th>
+            <th scope="col">Resale willingness</th>
+            <th scope="col">How do you feel about it?</th>
+            <th scope="col" class="wardrobe-table__value-heading">
+              Est. resale value
+            </th>
+            <th scope="col" class="wardrobe-table__actions-heading"></th>
+          </tr>
+        </thead>
+        <tbody id="wardrobe-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
 
     <section
       id="sales"

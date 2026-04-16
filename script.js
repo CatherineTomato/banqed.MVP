@@ -1,6 +1,6 @@
 // =========================================
 // banqed MVP - App Shell + Settings + Items
-// Add Item workflow refined
+// Add Item workflow + Wardrobe render
 // =========================================
 
 // -----------------------------------------
@@ -384,6 +384,29 @@ function addUniqueOption(targetArray, newValue) {
   return normalized;
 }
 
+function formatCurrency(value) {
+  const numericValue = Number(value) || 0;
+
+  return new Intl.NumberFormat("en-IE", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: numericValue % 1 === 0 ? 0 : 2
+  }).format(numericValue);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function getItemLifecycleState(item) {
+  return item.lifecycleState || item.status || "wardrobe";
+}
+
 // -----------------------------------------
 // DOM refs
 // -----------------------------------------
@@ -403,6 +426,14 @@ const fieldRefs = {
   wearFrequency: document.getElementById("item-wear-frequency"),
   estimatedValue: document.getElementById("item-estimated-value"),
   resaleWillingness: document.getElementById("item-resale-willingness")
+};
+
+const wardrobeRefs = {
+  itemCount: document.getElementById("wardrobe-item-count"),
+  totalValue: document.getElementById("wardrobe-total-value"),
+  tableBody: document.getElementById("wardrobe-table-body"),
+  emptyState: document.getElementById("wardrobe-empty-state"),
+  tableWrap: document.getElementById("wardrobe-table-wrap")
 };
 
 const multiState = {
@@ -478,6 +509,8 @@ function setFeedback(message) {
 // -----------------------------------------
 
 function populateSingleSelect(selectEl, options, placeholder, includeAddNew = false) {
+  if (!selectEl) return;
+
   const previousValue = selectEl.value;
   selectEl.innerHTML = "";
 
@@ -503,6 +536,7 @@ function populateSingleSelect(selectEl, options, placeholder, includeAddNew = fa
   const exists = Array.from(selectEl.options).some(
     (option) => option.value === previousValue
   );
+
   selectEl.value = exists ? previousValue : "";
 }
 
@@ -907,6 +941,170 @@ function validateSection(key) {
 }
 
 // -----------------------------------------
+// Wardrobe page rendering
+// -----------------------------------------
+
+const wardrobeRefs = {
+  itemCount: document.getElementById("wardrobe-item-count"),
+  totalValue: document.getElementById("wardrobe-total-value"),
+  tableBody: document.getElementById("wardrobe-table-body"),
+  emptyState: document.getElementById("wardrobe-empty-state"),
+  tableWrap: document.getElementById("wardrobe-table-wrap")
+};
+
+function getItemLifecycleState(item) {
+  return item.lifecycleState || item.status || "wardrobe";
+}
+
+function getWardrobeItems() {
+  return items.filter((item) => getItemLifecycleState(item) === "wardrobe");
+}
+
+function formatCurrency(value) {
+  const numericValue = Number(value) || 0;
+
+  return new Intl.NumberFormat("en-IE", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: numericValue % 1 === 0 ? 0 : 2
+  }).format(numericValue);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function renderTokenGroup(values) {
+  if (!Array.isArray(values) || values.length === 0) {
+    return `<span class="wardrobe-token wardrobe-token--muted">—</span>`;
+  }
+
+  return `
+    <div class="wardrobe-token-group">
+      ${values
+        .map((value) => `<span class="wardrobe-token">${escapeHtml(value)}.</span>`)
+        .join("")}
+    </div>
+  `;
+}
+
+function renderSingleToken(value) {
+  if (!value) {
+    return `<span class="wardrobe-token wardrobe-token--muted">—</span>`;
+  }
+
+  return `<span class="wardrobe-token">${escapeHtml(value)}.</span>`;
+}
+
+function renderSourceToken(item) {
+  const parts = [];
+
+  if (item.sourceLocation) parts.push(item.sourceLocation);
+  if (item.sourceType) parts.push(item.sourceType);
+
+  if (!parts.length) {
+    return `<span class="wardrobe-token wardrobe-token--muted">—</span>`;
+  }
+
+  return `<span class="wardrobe-token">${escapeHtml(parts.join(". "))}.</span>`;
+}
+
+function getWardrobeTotalValue(wardrobeItems) {
+  return wardrobeItems.reduce((total, item) => {
+    return total + (Number(item.estimatedValue) || 0);
+  }, 0);
+}
+
+function renderWardrobeMetrics(wardrobeItems) {
+  if (wardrobeRefs.itemCount) {
+    wardrobeRefs.itemCount.textContent = String(wardrobeItems.length);
+  }
+
+  if (wardrobeRefs.totalValue) {
+    wardrobeRefs.totalValue.textContent = formatCurrency(
+      getWardrobeTotalValue(wardrobeItems)
+    );
+  }
+}
+
+function createWardrobeRowMarkup(item) {
+  return `
+    <tr data-item-id="${escapeHtml(item.id)}">
+      <td class="wardrobe-table__item-cell">
+        <p class="wardrobe-table__item-name">${escapeHtml(item.name || "Untitled item")}</p>
+        <div class="wardrobe-table__item-tags">
+          ${renderSingleToken(item.category)}
+          ${renderSingleToken(item.itemType)}
+        </div>
+      </td>
+      <td>${renderTokenGroup(item.colours)}</td>
+      <td>${renderTokenGroup(item.details)}</td>
+      <td>${renderTokenGroup(item.contexts)}</td>
+      <td>${renderTokenGroup(item.styles)}</td>
+      <td>${renderSingleToken(item.brand)}</td>
+      <td>${renderSourceToken(item)}</td>
+      <td>${renderSingleToken(item.wearFrequency)}</td>
+      <td>${renderSingleToken(item.resaleWillingness)}</td>
+      <td>${
+        Array.isArray(item.emotionalRating)
+          ? renderTokenGroup(item.emotionalRating)
+          : renderSingleToken(item.emotionalRating)
+      }</td>
+      <td class="wardrobe-table__value-cell">
+        <p class="wardrobe-table__value">${formatCurrency(item.estimatedValue)}</p>
+      </td>
+      <td class="wardrobe-table__actions-cell">
+        <button
+          type="button"
+          class="wardrobe-table__actions-button"
+          aria-label="Item actions"
+        >
+          …
+        </button>
+      </td>
+    </tr>
+  `;
+}
+
+function renderWardrobeTable(wardrobeItems) {
+  if (!wardrobeRefs.tableBody) return;
+
+  if (!wardrobeItems.length) {
+    wardrobeRefs.tableBody.innerHTML = "";
+    return;
+  }
+
+  wardrobeRefs.tableBody.innerHTML = wardrobeItems
+    .map((item) => createWardrobeRowMarkup(item))
+    .join("");
+}
+
+function renderWardrobeEmptyState(wardrobeItems) {
+  const hasItems = wardrobeItems.length > 0;
+
+  if (wardrobeRefs.emptyState) {
+    wardrobeRefs.emptyState.hidden = hasItems;
+  }
+
+  if (wardrobeRefs.tableWrap) {
+    wardrobeRefs.tableWrap.hidden = !hasItems;
+  }
+}
+
+function renderWardrobePage() {
+  const wardrobeItems = getWardrobeItems();
+
+  renderWardrobeMetrics(wardrobeItems);
+  renderWardrobeEmptyState(wardrobeItems);
+  renderWardrobeTable(wardrobeItems);
+}
+
+// -----------------------------------------
 // Submission
 // -----------------------------------------
 
@@ -981,9 +1179,10 @@ function handleAddItemSubmit(event) {
     return;
   }
 
-  const newItem = buildItemFromForm();
-  items.push(newItem);
-  saveItems();
+ const newItem = buildItemFromForm();
+items.push(newItem);
+saveItems();
+renderWardrobePage();
 
 const destinationLabel =
   newItem.status === "sales" ? "Sales" : "Wardrobe";

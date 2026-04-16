@@ -697,3 +697,209 @@ textarea:focus-visible {
 .multi-select__options {
   max-height: min(14rem, 32vh);
 }
+/* =========================================
+   Wardrobe page
+   ========================================= */
+
+.wardrobe-page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.wardrobe-page__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 48rem);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.wardrobe-page__title-block {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.wardrobe-page__title {
+  margin: 0;
+  font-size: clamp(3.5rem, 8vw, 6rem);
+  line-height: 0.9;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+}
+
+.wardrobe-page__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  align-items: baseline;
+}
+
+.wardrobe-page__metric {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.wardrobe-page__metric span {
+  font-weight: 700;
+}
+
+.wardrobe-page__controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-3);
+  align-self: start;
+}
+
+.wardrobe-page__control-button {
+  width: 100%;
+  min-height: 2.9rem;
+  border: 1px solid var(--color-border-input);
+  padding: 0.5rem 0.8rem;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.wardrobe-page__add-button {
+  grid-row: 1 / span 2;
+  min-width: 6rem;
+  min-height: 6rem;
+  border: 1px solid transparent;
+  background: var(--color-accent);
+  font-size: 2.5rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wardrobe-empty-state {
+  border: 1px solid var(--color-border-soft);
+  padding: var(--space-6);
+  display: grid;
+  gap: var(--space-3);
+  max-width: 42rem;
+}
+
+.wardrobe-empty-state__title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.wardrobe-empty-state__text {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.wardrobe-empty-state__button {
+  max-width: 14rem;
+}
+
+.wardrobe-table-wrap {
+  overflow-x: auto;
+}
+
+.wardrobe-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 1200px;
+}
+
+.wardrobe-table thead th {
+  text-align: left;
+  vertical-align: top;
+  padding: 0 1rem 1rem 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.wardrobe-table tbody td {
+  vertical-align: top;
+  padding: 1.5rem 1rem 1.5rem 0;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.wardrobe-table__item-cell {
+  min-width: 16rem;
+}
+
+.wardrobe-table__item-name {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.wardrobe-table__item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.wardrobe-token-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.wardrobe-token {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--color-border-input);
+  font-size: 0.9rem;
+  line-height: 1.2;
+  background: transparent;
+}
+
+.wardrobe-token--muted {
+  color: var(--color-text-muted);
+}
+
+.wardrobe-table__value-heading,
+.wardrobe-table__value-cell {
+  text-align: right;
+}
+
+.wardrobe-table__value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.wardrobe-table__actions-heading,
+.wardrobe-table__actions-cell {
+  width: 2.5rem;
+  text-align: right;
+}
+
+.wardrobe-table__actions-button {
+  font-size: 1.6rem;
+  line-height: 1;
+  padding: 0;
+}
+
+@media (max-width: 1100px) {
+  .wardrobe-page__header {
+    grid-template-columns: 1fr;
+  }
+
+  .wardrobe-page__controls {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .wardrobe-page__title {
+    font-size: 3.25rem;
+  }
+
+  .wardrobe-page__metrics {
+    gap: var(--space-4);
+  }
+}
