@@ -57,7 +57,6 @@ const defaultSettingsData = {
     "Sleepwear",
     "Accessories"
   ],
-
   itemTypesByCategory: {
     Tops: [
       "Long sleeve top",
@@ -136,11 +135,7 @@ const defaultSettingsData = {
       "Boots",
       "Kitten heels"
     ],
-    Swimwear: [
-      "Bikini",
-      "Swimsuit",
-      "Cover-up"
-    ],
+    Swimwear: ["Bikini", "Swimsuit", "Cover-up"],
     Sleepwear: [
       "Pyjama set",
       "Pyjama top",
@@ -166,7 +161,6 @@ const defaultSettingsData = {
       "Bracelet"
     ]
   },
-
   colours: [
     "Black",
     "White",
@@ -187,7 +181,6 @@ const defaultSettingsData = {
     "Orange",
     "Multicolour"
   ],
-
   details: [
     "Collared",
     "Polka dot",
@@ -225,7 +218,6 @@ const defaultSettingsData = {
     "Animal print",
     "Asymmetric straps"
   ],
-
   contexts: [
     "Everyday",
     "Work",
@@ -238,7 +230,6 @@ const defaultSettingsData = {
     "Special occasion",
     "Pub"
   ],
-
   styles: [
     "Office",
     "Party",
@@ -255,7 +246,6 @@ const defaultSettingsData = {
     "Edgy",
     "Chic"
   ],
-
   brands: [
     "No brand identified",
     "Alo",
@@ -270,7 +260,6 @@ const defaultSettingsData = {
     "Ragged Priest",
     "Vaccodor"
   ],
-
   sourceTypes: [
     "Charity shop",
     "Vintage shop",
@@ -280,7 +269,6 @@ const defaultSettingsData = {
     "Hand-me-down",
     "Present"
   ],
-
   sourceLocations: [
     "Unknown",
     "Dublin",
@@ -291,7 +279,6 @@ const defaultSettingsData = {
     "Galway",
     "Madrid"
   ],
-
   wearFrequencies: [
     "Never worn",
     "Weekly",
@@ -302,7 +289,6 @@ const defaultSettingsData = {
     "Used to wear often",
     "Rarely"
   ],
-
   resaleWillingnessOptions: [
     "Keep",
     "Keep for now",
@@ -310,7 +296,6 @@ const defaultSettingsData = {
     "Sell if price is right",
     "Sell now"
   ],
-
   emotionalRatings: [
     "Love",
     "Really like",
@@ -536,7 +521,6 @@ function populateSingleSelect(selectEl, options, placeholder, includeAddNew = fa
   const exists = Array.from(selectEl.options).some(
     (option) => option.value === previousValue
   );
-
   selectEl.value = exists ? previousValue : "";
 }
 
@@ -553,35 +537,20 @@ function populateSingleDropdowns() {
     "Select category",
     true
   );
-
   populateSingleSelect(fieldRefs.itemType, [], "Select item type", true);
-
-  populateSingleSelect(
-    fieldRefs.brand,
-    settingsData.brands,
-    "Select brand",
-    true
-  );
-
-  populateSingleSelect(
-    fieldRefs.sourceType,
-    settingsData.sourceTypes,
-    "Select source type"
-  );
-
+  populateSingleSelect(fieldRefs.brand, settingsData.brands, "Select brand", true);
+  populateSingleSelect(fieldRefs.sourceType, settingsData.sourceTypes, "Select source type");
   populateSingleSelect(
     fieldRefs.sourceLocation,
     settingsData.sourceLocations,
     "Select source location",
     true
   );
-
   populateSingleSelect(
     fieldRefs.wearFrequency,
     settingsData.wearFrequencies,
     "Select wear frequency"
   );
-
   populateSingleSelect(
     fieldRefs.resaleWillingness,
     settingsData.resaleWillingnessOptions,
@@ -827,7 +796,6 @@ function getCenteredScrollTopForElement(targetEl) {
   const targetHeight = rect.height;
 
   const visualCenterBias = window.innerHeight * 0.12;
-
   const targetTop =
     absoluteTop - (window.innerHeight / 2) + (targetHeight / 2) + visualCenterBias;
 
@@ -944,39 +912,8 @@ function validateSection(key) {
 // Wardrobe page rendering
 // -----------------------------------------
 
-const wardrobeRefs = {
-  itemCount: document.getElementById("wardrobe-item-count"),
-  totalValue: document.getElementById("wardrobe-total-value"),
-  tableBody: document.getElementById("wardrobe-table-body"),
-  emptyState: document.getElementById("wardrobe-empty-state"),
-  tableWrap: document.getElementById("wardrobe-table-wrap")
-};
-
-function getItemLifecycleState(item) {
-  return item.lifecycleState || item.status || "wardrobe";
-}
-
 function getWardrobeItems() {
   return items.filter((item) => getItemLifecycleState(item) === "wardrobe");
-}
-
-function formatCurrency(value) {
-  const numericValue = Number(value) || 0;
-
-  return new Intl.NumberFormat("en-IE", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: numericValue % 1 === 0 ? 0 : 2
-  }).format(numericValue);
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 function renderTokenGroup(values) {
@@ -1098,7 +1035,6 @@ function renderWardrobeEmptyState(wardrobeItems) {
 
 function renderWardrobePage() {
   const wardrobeItems = getWardrobeItems();
-
   renderWardrobeMetrics(wardrobeItems);
   renderWardrobeEmptyState(wardrobeItems);
   renderWardrobeTable(wardrobeItems);
@@ -1132,6 +1068,7 @@ function buildItemFromForm() {
       ? [...multiState.emotionalRating]
       : null,
     status,
+    lifecycleState: status,
     dateAdded: nowISO(),
     dateUpdated: nowISO()
   };
@@ -1148,7 +1085,6 @@ function validateFullForm() {
 
 function resetAddItemForm() {
   addItemForm.reset();
-  clearFeedback();
 
   Object.keys(multiState).forEach((key) => {
     multiState[key] = [];
@@ -1165,7 +1101,9 @@ function resetAddItemForm() {
   renderSectionStates();
   recenterActiveSectionAfterLayout();
 
-  fieldRefs.name.focus();
+  if (fieldRefs.name) {
+    fieldRefs.name.focus();
+  }
 }
 
 function handleAddItemSubmit(event) {
@@ -1179,15 +1117,15 @@ function handleAddItemSubmit(event) {
     return;
   }
 
- const newItem = buildItemFromForm();
-items.push(newItem);
-saveItems();
-renderWardrobePage();
+  const newItem = buildItemFromForm();
+  items.push(newItem);
+  saveItems();
+  renderWardrobePage();
 
-const destinationLabel =
-  newItem.status === "sales" ? "Sales" : "Wardrobe";
+  const destinationLabel =
+    newItem.status === "sales" ? "Sales" : "Wardrobe";
 
-const message = `"${newItem.name}" added to ${destinationLabel}.`;
+  const message = `"${newItem.name}" added to ${destinationLabel}.`;
 
   resetAddItemForm();
   setFeedback(message);
@@ -1232,7 +1170,10 @@ function handleCategoryChange() {
       "Select category",
       true
     );
-    if (storedValue) fieldRefs.category.value = storedValue;
+
+    if (storedValue) {
+      fieldRefs.category.value = storedValue;
+    }
   }
 
   fieldRefs.itemType.value = "";
@@ -1267,7 +1208,11 @@ function handleItemTypeChange() {
   saveSettings();
 
   refreshItemTypeOptions();
-  if (storedValue) fieldRefs.itemType.value = storedValue;
+
+  if (storedValue) {
+    fieldRefs.itemType.value = storedValue;
+  }
+
   renderSectionStates();
 }
 
@@ -1343,10 +1288,6 @@ function wireNavigation() {
   });
 }
 
-function getSectionFromElement(element) {
-  return element?.closest(".form-section") || null;
-}
-
 function recenterSectionForField(element) {
   if (!element) return;
   scrollElementToWorkingCenter(element);
@@ -1375,28 +1316,45 @@ function wireSingleSelects() {
     });
   });
 
-  fieldRefs.category.addEventListener("change", handleCategoryChange);
-  fieldRefs.itemType.addEventListener("change", handleItemTypeChange);
-  fieldRefs.brand.addEventListener("change", handleBrandChange);
-  fieldRefs.sourceType.addEventListener("change", handleSourceTypeChange);
-  fieldRefs.sourceLocation.addEventListener("change", handleSourceLocationChange);
-  fieldRefs.wearFrequency.addEventListener("change", handleUsageFieldChange);
-  fieldRefs.estimatedValue.addEventListener("focus", () => {
-    recenterSectionForField(fieldRefs.estimatedValue);
-  });
-  fieldRefs.estimatedValue.addEventListener("click", () => {
-    recenterSectionForField(fieldRefs.estimatedValue);
-  });
-  fieldRefs.estimatedValue.addEventListener("input", handleUsageFieldChange);
-  fieldRefs.resaleWillingness.addEventListener("change", handleUsageFieldChange);
-
-  fieldRefs.name.addEventListener("focus", () => {
-    recenterSectionForField(fieldRefs.name);
-  });
-  fieldRefs.name.addEventListener("click", () => {
-    recenterSectionForField(fieldRefs.name);
-  });
-  fieldRefs.name.addEventListener("input", renderSectionStates);
+  if (fieldRefs.category) {
+    fieldRefs.category.addEventListener("change", handleCategoryChange);
+  }
+  if (fieldRefs.itemType) {
+    fieldRefs.itemType.addEventListener("change", handleItemTypeChange);
+  }
+  if (fieldRefs.brand) {
+    fieldRefs.brand.addEventListener("change", handleBrandChange);
+  }
+  if (fieldRefs.sourceType) {
+    fieldRefs.sourceType.addEventListener("change", handleSourceTypeChange);
+  }
+  if (fieldRefs.sourceLocation) {
+    fieldRefs.sourceLocation.addEventListener("change", handleSourceLocationChange);
+  }
+  if (fieldRefs.wearFrequency) {
+    fieldRefs.wearFrequency.addEventListener("change", handleUsageFieldChange);
+  }
+  if (fieldRefs.estimatedValue) {
+    fieldRefs.estimatedValue.addEventListener("focus", () => {
+      recenterSectionForField(fieldRefs.estimatedValue);
+    });
+    fieldRefs.estimatedValue.addEventListener("click", () => {
+      recenterSectionForField(fieldRefs.estimatedValue);
+    });
+    fieldRefs.estimatedValue.addEventListener("input", handleUsageFieldChange);
+  }
+  if (fieldRefs.resaleWillingness) {
+    fieldRefs.resaleWillingness.addEventListener("change", handleUsageFieldChange);
+  }
+  if (fieldRefs.name) {
+    fieldRefs.name.addEventListener("focus", () => {
+      recenterSectionForField(fieldRefs.name);
+    });
+    fieldRefs.name.addEventListener("click", () => {
+      recenterSectionForField(fieldRefs.name);
+    });
+    fieldRefs.name.addEventListener("input", renderSectionStates);
+  }
 }
 
 function wireMultiSelects() {
@@ -1454,4 +1412,5 @@ document.addEventListener("DOMContentLoaded", () => {
   wireNavigation();
   showSection("add-item");
   initAddItemForm();
+  renderWardrobePage();
 });
