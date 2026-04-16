@@ -584,33 +584,25 @@ function renderMultiSelect(fieldKey) {
   optionsWrap.innerHTML = "";
 
   options.forEach((value) => {
-    const optionId = `${fieldKey}-${value.replace(/\s+/g, "-").toLowerCase()}`;
-
-    const labelEl = document.createElement("label");
-    labelEl.className = "multi-select__option";
-    labelEl.setAttribute("for", optionId);
+    const optionEl = document.createElement("button");
+    optionEl.type = "button";
+    optionEl.className = "multi-select__option";
 
     if (multiDraftState[fieldKey].includes(value)) {
-      labelEl.classList.add("is-selected");
+      optionEl.classList.add("is-selected");
     }
 
-    const inputEl = document.createElement("input");
-    inputEl.type = "checkbox";
-    inputEl.id = optionId;
-    inputEl.value = value;
-    inputEl.checked = multiDraftState[fieldKey].includes(value);
+    optionEl.addEventListener("click", () => {
+      const isSelected = multiDraftState[fieldKey].includes(value);
 
-    inputEl.addEventListener("change", () => {
-      if (inputEl.checked) {
-        if (!multiDraftState[fieldKey].includes(value)) {
-          multiDraftState[fieldKey].push(value);
-        }
-        labelEl.classList.add("is-selected");
-      } else {
+      if (isSelected) {
         multiDraftState[fieldKey] = multiDraftState[fieldKey].filter(
           (item) => item !== value
         );
-        labelEl.classList.remove("is-selected");
+        optionEl.classList.remove("is-selected");
+      } else {
+        multiDraftState[fieldKey].push(value);
+        optionEl.classList.add("is-selected");
       }
     });
 
@@ -618,9 +610,8 @@ function renderMultiSelect(fieldKey) {
     textEl.className = "multi-select__label";
     textEl.textContent = value;
 
-    labelEl.appendChild(inputEl);
-    labelEl.appendChild(textEl);
-    optionsWrap.appendChild(labelEl);
+    optionEl.appendChild(textEl);
+    optionsWrap.appendChild(optionEl);
   });
 
   trigger.textContent = formatMultiTriggerLabel(fieldKey);
@@ -654,6 +645,11 @@ function openMultiPanel(fieldKey) {
   const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
 
   if (!multiEl || !panel || !trigger) return;
+
+  const parentSection = multiEl.closest(".form-section");
+  if (parentSection) {
+    scrollSectionIntoWorkingPosition(parentSection);
+  }
 
   multiEl.classList.add("is-open");
   panel.hidden = false;
@@ -745,15 +741,57 @@ function isSectionComplete(key) {
   return false;
 }
 
+function renderSectionStates() {
+  const safeActiveKey = formSections[activeSectionKey] ? activeSectionKey : "identity";
+
+  sectionOrder.forEach((key) => {
+    const sectionEl = formSections[key];
+    if (!sectionEl) return;
+
+    sectionEl.classList.remove("is-active", "is-complete");
+
+    if (key === safeActiveKey) {
+      sectionEl.classList.add("is-active");
+      sectionEl.style.pointerEvents = "auto";
+    } else if (completedSections.has(key)) {
+      sectionEl.classList.add("is-complete");
+      sectionEl.style.pointerEvents = "auto";
+    } else {
+      sectionEl.style.pointerEvents = "none";
+    }
+  });
+
+  activeSectionKey = safeActiveKey;
+  updatePlusPosition();
+}
+
+function scrollSectionIntoWorkingPosition(sectionEl) {
+  if (!sectionEl) return;
+
+  const rect = sectionEl.getBoundingClientRect();
+  const absoluteTop = window.scrollY + rect.top;
+
+  // Place the active section slightly above centre
+  // so there is room for dropdowns to open beneath it.
+  const targetTop = absoluteTop - (window.innerHeight * 0.22);
+
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior: "smooth"
+  });
+}
+
+function scrollActiveSectionIntoWorkingPosition() {
+  const activeSection = formSections[activeSectionKey];
+  scrollSectionIntoWorkingPosition(activeSection);
+}
+
 function setActiveSection(key, scroll = false) {
   activeSectionKey = key;
   renderSectionStates();
 
   if (scroll) {
-    formSections[key]?.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
+    scrollActiveSectionIntoWorkingPosition();
   }
 }
 
@@ -763,60 +801,16 @@ function completeSectionAndAdvance(sectionKey) {
   const currentIndex = getSectionIndex(sectionKey);
   const nextKey = sectionOrder[currentIndex + 1];
 
- if (nextKey) {
-  activeSectionKey = nextKey;
-  renderSectionStates();
-  formSections[nextKey]?.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
-} else {
-  renderSectionStates();
-}
-}
-
-function renderMultiSelect(fieldKey) {
-  const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
-  const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
-  const optionsWrap = document.querySelector(`[data-multi-options="${fieldKey}"]`);
-
-  if (!trigger || !panel || !optionsWrap) return;
-
-  const options = settingsData[multiConfig[fieldKey].optionsKey];
-  optionsWrap.innerHTML = "";
-
-  options.forEach((value) => {
-    const optionEl = document.createElement("button");
-    optionEl.type = "button";
-    optionEl.className = "multi-select__option";
-
-    if (multiDraftState[fieldKey].includes(value)) {
-      optionEl.classList.add("is-selected");
-    }
-
-    optionEl.addEventListener("click", () => {
-      const isSelected = multiDraftState[fieldKey].includes(value);
-
-      if (isSelected) {
-        multiDraftState[fieldKey] = multiDraftState[fieldKey].filter(
-          (item) => item !== value
-        );
-        optionEl.classList.remove("is-selected");
-      } else {
-        multiDraftState[fieldKey].push(value);
-        optionEl.classList.add("is-selected");
-      }
+  if (nextKey) {
+    activeSectionKey = nextKey;
+    renderSectionStates();
+    formSections[nextKey]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
     });
-
-    const textEl = document.createElement("span");
-    textEl.className = "multi-select__label";
-    textEl.textContent = value;
-
-    optionEl.appendChild(textEl);
-    optionsWrap.appendChild(optionEl);
-  });
-
-  trigger.textContent = formatMultiTriggerLabel(fieldKey);
+  } else {
+    renderSectionStates();
+  }
 }
 
 function updatePlusPosition() {
@@ -951,13 +945,13 @@ function handleAddItemSubmit(event) {
   items.push(newItem);
   saveItems();
 
-  setFeedback(
+  const message =
     newItem.status === "sales"
       ? "Item added to sales."
-      : "Item added to wardrobe."
-  );
+      : "Item added to wardrobe.";
 
   resetAddItemForm();
+  setFeedback(message);
 }
 
 // -----------------------------------------
@@ -1004,17 +998,14 @@ function handleCategoryChange() {
 
   fieldRefs.itemType.value = "";
   refreshItemTypeOptions();
+  renderSectionStates();
 }
 
 function handleItemTypeChange() {
   clearFeedback();
 
   if (fieldRefs.itemType.value !== "__add_new__") {
-    const sectionKey = "identity";
-    if (isSectionComplete(sectionKey)) {
-      // wait for dropdown saves, do not auto-advance here
-      renderSectionStates();
-    }
+    renderSectionStates();
     return;
   }
 
@@ -1038,6 +1029,7 @@ function handleItemTypeChange() {
 
   refreshItemTypeOptions();
   if (storedValue) fieldRefs.itemType.value = storedValue;
+  renderSectionStates();
 }
 
 function handleSourceTypeChange() {
@@ -1159,6 +1151,8 @@ function initAddItemForm() {
   refreshItemTypeOptions();
   renderAllMultiSelects();
   closeAllMultiPanels();
+
+  activeSectionKey = "identity";
   renderSectionStates();
 
   wireSingleSelects();

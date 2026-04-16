@@ -809,3 +809,8 @@ textarea:focus-visible {
   scroll-margin-top: 20vh;
   scroll-margin-bottom: 20vh;
 }
+
+.form-section {
+  scroll-margin-top: 22vh;
+  scroll-margin-bottom: 22vh;
+}
