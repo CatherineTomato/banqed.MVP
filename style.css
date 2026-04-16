@@ -584,7 +584,8 @@ textarea:focus-visible {
 .form-feedback {
   margin: 0;
   font-size: 0.95rem;
-  color: var(--color-text-muted);
+  color: var(--color-text);
+  font-weight: 600;
 }
 
 /* =========================================

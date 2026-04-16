@@ -985,10 +985,10 @@ function handleAddItemSubmit(event) {
   items.push(newItem);
   saveItems();
 
-  const message =
-    newItem.status === "sales"
-      ? "Item added to sales."
-      : "Item added to wardrobe.";
+const destinationLabel =
+  newItem.status === "sales" ? "Sales" : "Wardrobe";
+
+const message = `"${newItem.name}" added to ${destinationLabel}.`;
 
   resetAddItemForm();
   setFeedback(message);
