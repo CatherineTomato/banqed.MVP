@@ -648,7 +648,7 @@ function openMultiPanel(fieldKey) {
 
   const parentSection = multiEl.closest(".form-section");
   if (parentSection) {
-    scrollSectionIntoWorkingPosition(parentSection);
+    scrollSectionToViewportCenter(parentSection);
   }
 
   multiEl.classList.add("is-open");
@@ -765,25 +765,39 @@ function renderSectionStates() {
   updatePlusPosition();
 }
 
-function scrollSectionIntoWorkingPosition(sectionEl) {
-  if (!sectionEl) return;
+function getViewportCenterScrollTop(sectionEl) {
+  if (!sectionEl) return window.scrollY;
 
   const rect = sectionEl.getBoundingClientRect();
   const absoluteTop = window.scrollY + rect.top;
+  const sectionHeight = rect.height;
 
-  // Place the active section slightly above centre
-  // so there is room for dropdowns to open beneath it.
-  const targetTop = absoluteTop - (window.innerHeight * 0.22);
+  const targetTop =
+    absoluteTop - (window.innerHeight / 2) + (sectionHeight / 2);
+
+  return Math.max(0, targetTop);
+}
+
+function scrollSectionToViewportCenter(sectionEl) {
+  if (!sectionEl) return;
 
   window.scrollTo({
-    top: Math.max(0, targetTop),
+    top: getViewportCenterScrollTop(sectionEl),
     behavior: "smooth"
   });
 }
 
-function scrollActiveSectionIntoWorkingPosition() {
+function scrollActiveSectionToViewportCenter() {
   const activeSection = formSections[activeSectionKey];
-  scrollSectionIntoWorkingPosition(activeSection);
+  scrollSectionToViewportCenter(activeSection);
+}
+
+function recenterActiveSectionAfterLayout() {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      scrollActiveSectionToViewportCenter();
+    });
+  });
 }
 
 function setActiveSection(key, scroll = false) {
@@ -791,7 +805,7 @@ function setActiveSection(key, scroll = false) {
   renderSectionStates();
 
   if (scroll) {
-    scrollActiveSectionIntoWorkingPosition();
+    recenterActiveSectionAfterLayout();
   }
 }
 
@@ -804,12 +818,10 @@ function completeSectionAndAdvance(sectionKey) {
   if (nextKey) {
     activeSectionKey = nextKey;
     renderSectionStates();
-    formSections[nextKey]?.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
+    recenterActiveSectionAfterLayout();
   } else {
     renderSectionStates();
+    recenterActiveSectionAfterLayout();
   }
 }
 
@@ -823,7 +835,7 @@ function updatePlusPosition() {
   const sectionHeight = activeSection.offsetHeight;
   const plusHeight = addItemPlus.offsetHeight;
 
-  const offset = Math.max(0, sectionTop + sectionHeight / 2 - plusHeight / 2);
+  const offset = Math.max(0, sectionTop + (sectionHeight / 2) - (plusHeight / 2));
   addItemLayout.style.setProperty("--plus-offset", `${offset}px`);
 }
 
@@ -926,6 +938,7 @@ function resetAddItemForm() {
   renderAllMultiSelects();
   closeAllMultiPanels();
   renderSectionStates();
+  recenterActiveSectionAfterLayout();
 
   fieldRefs.name.focus();
 }
@@ -1104,15 +1117,60 @@ function wireNavigation() {
   });
 }
 
+function getSectionFromElement(element) {
+  return element?.closest(".form-section") || null;
+}
+
+function recenterSectionForField(element) {
+  const parentSection = getSectionFromElement(element);
+  if (!parentSection) return;
+  scrollSectionToViewportCenter(parentSection);
+}
+
 function wireSingleSelects() {
+  const singleSelectFields = [
+    fieldRefs.category,
+    fieldRefs.itemType,
+    fieldRefs.brand,
+    fieldRefs.sourceType,
+    fieldRefs.sourceLocation,
+    fieldRefs.wearFrequency,
+    fieldRefs.resaleWillingness
+  ];
+
+  singleSelectFields.forEach((selectEl) => {
+    if (!selectEl) return;
+
+    selectEl.addEventListener("focus", () => {
+      recenterSectionForField(selectEl);
+    });
+
+    selectEl.addEventListener("click", () => {
+      recenterSectionForField(selectEl);
+    });
+  });
+
   fieldRefs.category.addEventListener("change", handleCategoryChange);
   fieldRefs.itemType.addEventListener("change", handleItemTypeChange);
   fieldRefs.brand.addEventListener("change", handleBrandChange);
   fieldRefs.sourceType.addEventListener("change", handleSourceTypeChange);
   fieldRefs.sourceLocation.addEventListener("change", handleSourceLocationChange);
   fieldRefs.wearFrequency.addEventListener("change", handleUsageFieldChange);
+  fieldRefs.estimatedValue.addEventListener("focus", () => {
+    recenterSectionForField(fieldRefs.estimatedValue);
+  });
+  fieldRefs.estimatedValue.addEventListener("click", () => {
+    recenterSectionForField(fieldRefs.estimatedValue);
+  });
   fieldRefs.estimatedValue.addEventListener("input", handleUsageFieldChange);
   fieldRefs.resaleWillingness.addEventListener("change", handleUsageFieldChange);
+
+  fieldRefs.name.addEventListener("focus", () => {
+    recenterSectionForField(fieldRefs.name);
+  });
+  fieldRefs.name.addEventListener("click", () => {
+    recenterSectionForField(fieldRefs.name);
+  });
   fieldRefs.name.addEventListener("input", renderSectionStates);
 }
 
@@ -1154,6 +1212,7 @@ function initAddItemForm() {
 
   activeSectionKey = "identity";
   renderSectionStates();
+  recenterActiveSectionAfterLayout();
 
   wireSingleSelects();
   wireMultiSelects();
