@@ -466,46 +466,41 @@
 </section>
 
 <section
+ 
+<section
   id="wardrobe"
   class="app-section"
   aria-labelledby="wardrobe-title"
   data-view="wardrobe"
 >
-  <div class="wardrobe-page">
-    <div class="wardrobe-page__header">
-      <div class="wardrobe-page__title-block">
-        <h1 id="wardrobe-title" class="wardrobe-page__title">Wardrobe</h1>
+  <div class="page-shell wardrobe-page">
+    <div class="wardrobe-header">
+      <div class="wardrobe-header__intro">
+        <h1 id="wardrobe-title" class="page-title">Wardrobe</h1>
 
-        <div class="wardrobe-page__metrics">
-          <p class="wardrobe-page__metric">
+        <div class="wardrobe-metrics-inline">
+          <p>
             <span id="wardrobe-item-count">0</span> items
           </p>
-          <p class="wardrobe-page__metric">
+          <p>
             <span id="wardrobe-total-value">€0</span> estimated resale value
           </p>
         </div>
       </div>
 
-      <div class="wardrobe-page__controls">
-        <button
-          type="button"
-          class="wardrobe-page__control-button"
-          aria-label="Filter wardrobe items"
-        >
-          Filter
-        </button>
+      <div class="wardrobe-header__controls">
+        <div class="wardrobe-controls-stack">
+          <button type="button" class="wardrobe-control-button">
+            Filter
+          </button>
+          <button type="button" class="wardrobe-control-button">
+            Sort
+          </button>
+        </div>
 
         <button
           type="button"
-          class="wardrobe-page__control-button"
-          aria-label="Sort wardrobe items"
-        >
-          Sort
-        </button>
-
-        <button
-          type="button"
-          class="wardrobe-page__add-button"
+          class="wardrobe-add-button"
           data-section="add-item"
           aria-label="Add item"
         >
@@ -518,12 +513,9 @@
       id="wardrobe-empty-state"
       class="wardrobe-empty-state"
       hidden
-      aria-live="polite"
     >
-      <p class="wardrobe-empty-state__title">No items in your wardrobe yet.</p>
-      <p class="wardrobe-empty-state__text">
-        Add your first item to begin building your wardrobe inventory.
-      </p>
+      <h2>No items in your wardrobe yet.</h2>
+      <p>Add your first item to begin building your wardrobe inventory.</p>
       <button
         type="button"
         class="button-primary wardrobe-empty-state__button"
@@ -533,24 +525,21 @@
       </button>
     </div>
 
-    <div id="wardrobe-table-wrap" class="wardrobe-table-wrap">
+    <div id="wardrobe-table-wrap" class="wardrobe-table-wrap" hidden>
       <table class="wardrobe-table">
         <thead>
           <tr>
-            <th scope="col">Item</th>
-            <th scope="col">Colour</th>
-            <th scope="col">Detail</th>
-            <th scope="col">Context</th>
-            <th scope="col">Style</th>
-            <th scope="col">Brand</th>
-            <th scope="col">Source</th>
-            <th scope="col">Wear frequency</th>
-            <th scope="col">Resale willingness</th>
-            <th scope="col">How do you feel about it?</th>
-            <th scope="col" class="wardrobe-table__value-heading">
-              Est. resale value
-            </th>
-            <th scope="col" class="wardrobe-table__actions-heading"></th>
+            <th>Item</th>
+            <th>Colour</th>
+            <th>Detail</th>
+            <th>Context</th>
+            <th>Style</th>
+            <th>Brand</th>
+            <th>Source</th>
+            <th>Wear frequency</th>
+            <th>Resale willingness</th>
+            <th>How do you feel about it?</th>
+            <th>Est. resale value</th>
           </tr>
         </thead>
         <tbody id="wardrobe-table-body"></tbody>

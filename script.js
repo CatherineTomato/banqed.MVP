@@ -1,11 +1,11 @@
 // =========================================
 // banqed MVP - App Shell + Settings + Items
-// Add Item workflow + Wardrobe render
+// Full Add Item workflow + Wardrobe render
 // =========================================
 
-// -----------------------------------------
-// Navigation
-// -----------------------------------------
+/* =========================================
+   Navigation
+========================================= */
 
 const navControls = document.querySelectorAll("[data-section]");
 const appSections = document.querySelectorAll(".app-section");
@@ -30,15 +30,23 @@ function showSection(sectionId) {
 }
 
 function handleNavClick(event) {
-  showSection(event.currentTarget.dataset.section);
+  const target = event.currentTarget?.dataset?.section;
+  if (!target) return;
+  showSection(target);
 }
 
-// -----------------------------------------
-// Shared Settings Data Layer
-// -----------------------------------------
+function wireNavigation() {
+  document.querySelectorAll("[data-section]").forEach((control) => {
+    control.addEventListener("click", handleNavClick);
+  });
+}
+
+/* =========================================
+   Shared Settings Data Layer
+========================================= */
 
 function normalizeValue(value) {
-  return value.trim().replace(/\s+/g, " ");
+  return String(value || "").trim().replace(/\s+/g, " ");
 }
 
 const defaultSettingsData = {
@@ -307,30 +315,49 @@ const defaultSettingsData = {
   ]
 };
 
-const settingsData =
-  JSON.parse(localStorage.getItem("settings")) ||
-  structuredClone(defaultSettingsData);
+function loadSettings() {
+  try {
+    const stored = JSON.parse(localStorage.getItem("settings"));
+    return stored || structuredClone(defaultSettingsData);
+  } catch {
+    return structuredClone(defaultSettingsData);
+  }
+}
+
+let settingsData = loadSettings();
 
 function saveSettings() {
   localStorage.setItem("settings", JSON.stringify(settingsData));
 }
 
-// -----------------------------------------
-// Shared Item Store
-// -----------------------------------------
+/* =========================================
+   Shared Item Store
+========================================= */
 
-let items = JSON.parse(localStorage.getItem("items")) || [];
+function loadItems() {
+  try {
+    const stored = JSON.parse(localStorage.getItem("items"));
+    return Array.isArray(stored) ? stored : [];
+  } catch {
+    return [];
+  }
+}
+
+let items = loadItems();
 
 function saveItems() {
   localStorage.setItem("items", JSON.stringify(items));
 }
 
-// -----------------------------------------
-// Helpers
-// -----------------------------------------
+/* =========================================
+   Utilities
+========================================= */
 
 function generateId() {
-  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  if (window.crypto && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
   return `item_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
@@ -345,11 +372,14 @@ function deriveSourceChannel(sourceType) {
   if (inPersonTypes.includes(sourceType)) return "In-person";
   if (sourceType === "Online") return "Online";
   if (transferTypes.includes(sourceType)) return "Transfer";
+
   return null;
 }
 
 function sortCaseInsensitive(values) {
-  values.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  values.sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" })
+  );
 }
 
 function addUniqueOption(targetArray, newValue) {
@@ -380,7 +410,7 @@ function formatCurrency(value) {
 }
 
 function escapeHtml(value) {
-  return String(value)
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -392,9 +422,9 @@ function getItemLifecycleState(item) {
   return item.lifecycleState || item.status || "wardrobe";
 }
 
-// -----------------------------------------
-// DOM refs
-// -----------------------------------------
+/* =========================================
+   DOM refs
+========================================= */
 
 const addItemForm = document.getElementById("add-item-form");
 const feedbackEl = document.getElementById("form-feedback");
@@ -441,27 +471,32 @@ const multiConfig = {
   colours: {
     label: "Select colours",
     optionsKey: "colours",
-    addPrompt: "Add new colour"
+    addPrompt: "Add new colour",
+    singleSelect: false
   },
   details: {
     label: "Select details",
     optionsKey: "details",
-    addPrompt: "Add new detail"
+    addPrompt: "Add new detail",
+    singleSelect: false
   },
   contexts: {
     label: "Select contexts",
     optionsKey: "contexts",
-    addPrompt: "Add new context"
+    addPrompt: "Add new context",
+    singleSelect: false
   },
   styles: {
     label: "Select styles",
     optionsKey: "styles",
-    addPrompt: "Add new style"
+    addPrompt: "Add new style",
+    singleSelect: false
   },
   emotionalRating: {
     label: "Select emotional rating",
     optionsKey: "emotionalRatings",
-    addPrompt: null
+    addPrompt: null,
+    singleSelect: true
   }
 };
 
@@ -477,9 +512,9 @@ const formSections = {
   emotion: document.getElementById("section-emotion")
 };
 
-// -----------------------------------------
-// Feedback
-// -----------------------------------------
+/* =========================================
+   Feedback
+========================================= */
 
 function clearFeedback() {
   if (feedbackEl) feedbackEl.textContent = "";
@@ -489,11 +524,16 @@ function setFeedback(message) {
   if (feedbackEl) feedbackEl.textContent = message;
 }
 
-// -----------------------------------------
-// Single-select population
-// -----------------------------------------
+/* =========================================
+   Single-select population
+========================================= */
 
-function populateSingleSelect(selectEl, options, placeholder, includeAddNew = false) {
+function populateSingleSelect(
+  selectEl,
+  options,
+  placeholder,
+  includeAddNew = false
+) {
   if (!selectEl) return;
 
   const previousValue = selectEl.value;
@@ -521,12 +561,16 @@ function populateSingleSelect(selectEl, options, placeholder, includeAddNew = fa
   const exists = Array.from(selectEl.options).some(
     (option) => option.value === previousValue
   );
+
   selectEl.value = exists ? previousValue : "";
 }
 
 function refreshItemTypeOptions() {
+  if (!fieldRefs.category || !fieldRefs.itemType) return;
+
   const category = fieldRefs.category.value;
   const options = settingsData.itemTypesByCategory[category] || [];
+
   populateSingleSelect(fieldRefs.itemType, options, "Select item type", true);
 }
 
@@ -537,20 +581,35 @@ function populateSingleDropdowns() {
     "Select category",
     true
   );
+
   populateSingleSelect(fieldRefs.itemType, [], "Select item type", true);
-  populateSingleSelect(fieldRefs.brand, settingsData.brands, "Select brand", true);
-  populateSingleSelect(fieldRefs.sourceType, settingsData.sourceTypes, "Select source type");
+
+  populateSingleSelect(
+    fieldRefs.brand,
+    settingsData.brands,
+    "Select brand",
+    true
+  );
+
+  populateSingleSelect(
+    fieldRefs.sourceType,
+    settingsData.sourceTypes,
+    "Select source type"
+  );
+
   populateSingleSelect(
     fieldRefs.sourceLocation,
     settingsData.sourceLocations,
     "Select source location",
     true
   );
+
   populateSingleSelect(
     fieldRefs.wearFrequency,
     settingsData.wearFrequencies,
     "Select wear frequency"
   );
+
   populateSingleSelect(
     fieldRefs.resaleWillingness,
     settingsData.resaleWillingnessOptions,
@@ -558,9 +617,9 @@ function populateSingleDropdowns() {
   );
 }
 
-// -----------------------------------------
-// Multi-select rendering
-// -----------------------------------------
+/* =========================================
+   Multi-select rendering
+========================================= */
 
 function formatMultiTriggerLabel(fieldKey) {
   const values = multiState[fieldKey];
@@ -569,6 +628,7 @@ function formatMultiTriggerLabel(fieldKey) {
   if (!values.length) return baseLabel;
   if (values.length === 1) return values[0];
   if (values.length === 2) return `${values[0]}, ${values[1]}`;
+
   return `${values.length} selected`;
 }
 
@@ -576,14 +636,35 @@ function cloneCommittedStateToDraft(fieldKey) {
   multiDraftState[fieldKey] = [...multiState[fieldKey]];
 }
 
+function toggleDraftSelection(fieldKey, value) {
+  const config = multiConfig[fieldKey];
+  const draft = multiDraftState[fieldKey];
+  const isSelected = draft.includes(value);
+
+  if (config.singleSelect) {
+    multiDraftState[fieldKey] = isSelected ? [] : [value];
+    return;
+  }
+
+  if (isSelected) {
+    multiDraftState[fieldKey] = draft.filter((item) => item !== value);
+  } else {
+    multiDraftState[fieldKey] = [...draft, value];
+  }
+}
+
 function renderMultiSelect(fieldKey) {
   const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
   const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
-  const optionsWrap = document.querySelector(`[data-multi-options="${fieldKey}"]`);
+  const optionsWrap = document.querySelector(
+    `[data-multi-options="${fieldKey}"]`
+  );
 
   if (!trigger || !panel || !optionsWrap) return;
 
-  const options = settingsData[multiConfig[fieldKey].optionsKey];
+  const config = multiConfig[fieldKey];
+  const options = settingsData[config.optionsKey];
+
   optionsWrap.innerHTML = "";
 
   options.forEach((value) => {
@@ -596,17 +677,8 @@ function renderMultiSelect(fieldKey) {
     }
 
     optionEl.addEventListener("click", () => {
-      const isSelected = multiDraftState[fieldKey].includes(value);
-
-      if (isSelected) {
-        multiDraftState[fieldKey] = multiDraftState[fieldKey].filter(
-          (item) => item !== value
-        );
-        optionEl.classList.remove("is-selected");
-      } else {
-        multiDraftState[fieldKey].push(value);
-        optionEl.classList.add("is-selected");
-      }
+      toggleDraftSelection(fieldKey, value);
+      renderMultiSelect(fieldKey);
     });
 
     const textEl = document.createElement("span");
@@ -621,7 +693,9 @@ function renderMultiSelect(fieldKey) {
 }
 
 function renderAllMultiSelects() {
-  Object.keys(multiConfig).forEach(renderMultiSelect);
+  Object.keys(multiConfig).forEach((fieldKey) => {
+    renderMultiSelect(fieldKey);
+  });
 }
 
 function closeAllMultiPanels() {
@@ -669,9 +743,12 @@ function handleMultiAdd(fieldKey) {
 
   const optionsKey = multiConfig[fieldKey].optionsKey;
   const storedValue = addUniqueOption(settingsData[optionsKey], rawValue);
+
   if (!storedValue) return;
 
-  if (!multiDraftState[fieldKey].includes(storedValue)) {
+  if (multiConfig[fieldKey].singleSelect) {
+    multiDraftState[fieldKey] = [storedValue];
+  } else if (!multiDraftState[fieldKey].includes(storedValue)) {
     multiDraftState[fieldKey].push(storedValue);
   }
 
@@ -698,9 +775,9 @@ function saveMultiPanel(fieldKey) {
   }
 }
 
-// -----------------------------------------
-// Section state
-// -----------------------------------------
+/* =========================================
+   Section state
+========================================= */
 
 function getSectionIndex(key) {
   return sectionOrder.indexOf(key);
@@ -709,32 +786,35 @@ function getSectionIndex(key) {
 function isSectionComplete(key) {
   if (key === "identity") {
     return (
-      fieldRefs.name.value.trim() !== "" &&
-      fieldRefs.category.value !== "" &&
-      fieldRefs.itemType.value !== "" &&
+      normalizeValue(fieldRefs.name?.value) !== "" &&
+      fieldRefs.category?.value !== "" &&
+      fieldRefs.itemType?.value !== "" &&
       multiState.colours.length > 0 &&
       multiState.details.length > 0
     );
   }
 
   if (key === "wearing") {
-    return multiState.contexts.length > 0 && multiState.styles.length > 0;
+    return (
+      multiState.contexts.length > 0 &&
+      multiState.styles.length > 0
+    );
   }
 
   if (key === "source") {
     return (
-      fieldRefs.brand.value !== "" &&
-      fieldRefs.sourceType.value !== "" &&
-      fieldRefs.sourceLocation.value !== ""
+      fieldRefs.brand?.value !== "" &&
+      fieldRefs.sourceType?.value !== "" &&
+      fieldRefs.sourceLocation?.value !== ""
     );
   }
 
   if (key === "usage") {
     return (
-      fieldRefs.wearFrequency.value !== "" &&
-      fieldRefs.estimatedValue.value !== "" &&
-      Number(fieldRefs.estimatedValue.value) >= 0 &&
-      fieldRefs.resaleWillingness.value !== ""
+      fieldRefs.wearFrequency?.value !== "" &&
+      fieldRefs.estimatedValue?.value !== "" &&
+      Number(fieldRefs.estimatedValue?.value) >= 0 &&
+      fieldRefs.resaleWillingness?.value !== ""
     );
   }
 
@@ -746,7 +826,9 @@ function isSectionComplete(key) {
 }
 
 function renderSectionStates() {
-  const safeActiveKey = formSections[activeSectionKey] ? activeSectionKey : "identity";
+  const safeActiveKey = formSections[activeSectionKey]
+    ? activeSectionKey
+    : "identity";
 
   sectionOrder.forEach((key) => {
     const sectionEl = formSections[key];
@@ -794,10 +876,13 @@ function getCenteredScrollTopForElement(targetEl) {
   const rect = targetEl.getBoundingClientRect();
   const absoluteTop = window.scrollY + rect.top;
   const targetHeight = rect.height;
-
   const visualCenterBias = window.innerHeight * 0.12;
+
   const targetTop =
-    absoluteTop - (window.innerHeight / 2) + (targetHeight / 2) + visualCenterBias;
+    absoluteTop -
+    (window.innerHeight / 2) +
+    (targetHeight / 2) +
+    visualCenterBias;
 
   return Math.max(0, targetTop);
 }
@@ -817,8 +902,7 @@ function scrollSectionToWorkingCenter(sectionEl) {
 }
 
 function scrollActiveSectionToWorkingCenter() {
-  const activeSection = formSections[activeSectionKey];
-  scrollSectionToWorkingCenter(activeSection);
+  scrollSectionToWorkingCenter(formSections[activeSectionKey]);
 }
 
 function recenterActiveSectionAfterLayout() {
@@ -864,42 +948,68 @@ function updatePlusPosition() {
   const sectionHeight = activeSection.offsetHeight;
   const plusHeight = addItemPlus.offsetHeight;
 
-  const offset = Math.max(0, sectionTop + (sectionHeight / 2) - (plusHeight / 2));
+  const offset = Math.max(
+    0,
+    sectionTop + (sectionHeight / 2) - (plusHeight / 2)
+  );
+
   addItemLayout.style.setProperty("--plus-offset", `${offset}px`);
 }
 
 function validateSection(key) {
   if (key === "identity") {
-    if (fieldRefs.name.value.trim() === "") return "Item name is required.";
-    if (fieldRefs.category.value === "") return "Category is required.";
-    if (fieldRefs.itemType.value === "") return "Item type is required.";
-    if (multiState.colours.length === 0) return "Select at least one colour.";
-    if (multiState.details.length === 0) return "Select at least one detail.";
+    if (normalizeValue(fieldRefs.name?.value) === "") {
+      return "Item name is required.";
+    }
+    if (fieldRefs.category?.value === "") {
+      return "Category is required.";
+    }
+    if (fieldRefs.itemType?.value === "") {
+      return "Item type is required.";
+    }
+    if (multiState.colours.length === 0) {
+      return "Select at least one colour.";
+    }
+    if (multiState.details.length === 0) {
+      return "Select at least one detail.";
+    }
     return null;
   }
 
   if (key === "wearing") {
-    if (multiState.contexts.length === 0) return "Select at least one context.";
-    if (multiState.styles.length === 0) return "Select at least one style.";
+    if (multiState.contexts.length === 0) {
+      return "Select at least one context.";
+    }
+    if (multiState.styles.length === 0) {
+      return "Select at least one style.";
+    }
     return null;
   }
 
   if (key === "source") {
-    if (fieldRefs.brand.value === "") return "Brand is required.";
-    if (fieldRefs.sourceType.value === "") return "Source type is required.";
-    if (fieldRefs.sourceLocation.value === "") return "Source location is required.";
+    if (fieldRefs.brand?.value === "") {
+      return "Brand is required.";
+    }
+    if (fieldRefs.sourceType?.value === "") {
+      return "Source type is required.";
+    }
+    if (fieldRefs.sourceLocation?.value === "") {
+      return "Source location is required.";
+    }
     return null;
   }
 
   if (key === "usage") {
-    if (fieldRefs.wearFrequency.value === "") return "Wear frequency is required.";
+    if (fieldRefs.wearFrequency?.value === "") {
+      return "Wear frequency is required.";
+    }
     if (
-      fieldRefs.estimatedValue.value === "" ||
-      Number(fieldRefs.estimatedValue.value) < 0
+      fieldRefs.estimatedValue?.value === "" ||
+      Number(fieldRefs.estimatedValue?.value) < 0
     ) {
       return "Estimated resale value must be a non-negative number.";
     }
-    if (fieldRefs.resaleWillingness.value === "") {
+    if (fieldRefs.resaleWillingness?.value === "") {
       return "Resale willingness is required.";
     }
     return null;
@@ -908,12 +1018,26 @@ function validateSection(key) {
   return null;
 }
 
-// -----------------------------------------
-// Wardrobe page rendering
-// -----------------------------------------
+/* =========================================
+   Wardrobe page rendering
+========================================= */
 
 function getWardrobeItems() {
   return items.filter((item) => getItemLifecycleState(item) === "wardrobe");
+}
+
+function getWardrobeTotalValue(wardrobeItems) {
+  return wardrobeItems.reduce((total, item) => {
+    return total + (Number(item.estimatedValue) || 0);
+  }, 0);
+}
+
+function renderSingleToken(value) {
+  if (!value) {
+    return `<span class="wardrobe-token wardrobe-token--muted">—</span>`;
+  }
+
+  return `<span class="wardrobe-token">${escapeHtml(value)}.</span>`;
 }
 
 function renderTokenGroup(values) {
@@ -930,14 +1054,6 @@ function renderTokenGroup(values) {
   `;
 }
 
-function renderSingleToken(value) {
-  if (!value) {
-    return `<span class="wardrobe-token wardrobe-token--muted">—</span>`;
-  }
-
-  return `<span class="wardrobe-token">${escapeHtml(value)}.</span>`;
-}
-
 function renderSourceToken(item) {
   const parts = [];
 
@@ -948,13 +1064,11 @@ function renderSourceToken(item) {
     return `<span class="wardrobe-token wardrobe-token--muted">—</span>`;
   }
 
-  return `<span class="wardrobe-token">${escapeHtml(parts.join(". "))}.</span>`;
-}
-
-function getWardrobeTotalValue(wardrobeItems) {
-  return wardrobeItems.reduce((total, item) => {
-    return total + (Number(item.estimatedValue) || 0);
-  }, 0);
+  return `
+    <div class="wardrobe-token-group">
+      <span class="wardrobe-token">${escapeHtml(parts.join(". "))}.</span>
+    </div>
+  `;
 }
 
 function renderWardrobeMetrics(wardrobeItems) {
@@ -970,10 +1084,16 @@ function renderWardrobeMetrics(wardrobeItems) {
 }
 
 function createWardrobeRowMarkup(item) {
+  const emotionalMarkup = Array.isArray(item.emotionalRating)
+    ? renderTokenGroup(item.emotionalRating)
+    : renderSingleToken(item.emotionalRating);
+
   return `
     <tr data-item-id="${escapeHtml(item.id)}">
       <td class="wardrobe-table__item-cell">
-        <p class="wardrobe-table__item-name">${escapeHtml(item.name || "Untitled item")}</p>
+        <p class="wardrobe-table__item-name">${escapeHtml(
+          item.name || "Untitled item"
+        )}</p>
         <div class="wardrobe-table__item-tags">
           ${renderSingleToken(item.category)}
           ${renderSingleToken(item.itemType)}
@@ -987,22 +1107,18 @@ function createWardrobeRowMarkup(item) {
       <td>${renderSourceToken(item)}</td>
       <td>${renderSingleToken(item.wearFrequency)}</td>
       <td>${renderSingleToken(item.resaleWillingness)}</td>
-      <td>${
-        Array.isArray(item.emotionalRating)
-          ? renderTokenGroup(item.emotionalRating)
-          : renderSingleToken(item.emotionalRating)
-      }</td>
-      <td class="wardrobe-table__value-cell">
-        <p class="wardrobe-table__value">${formatCurrency(item.estimatedValue)}</p>
-      </td>
-      <td class="wardrobe-table__actions-cell">
+      <td>${emotionalMarkup}</td>
+      <td>
         <button
           type="button"
           class="wardrobe-table__actions-button"
-          aria-label="Item actions"
+          aria-label="Edit item"
         >
           …
         </button>
+        <p class="wardrobe-table__value">${formatCurrency(
+          item.estimatedValue
+        )}</p>
       </td>
     </tr>
   `;
@@ -1035,14 +1151,15 @@ function renderWardrobeEmptyState(wardrobeItems) {
 
 function renderWardrobePage() {
   const wardrobeItems = getWardrobeItems();
+
   renderWardrobeMetrics(wardrobeItems);
   renderWardrobeEmptyState(wardrobeItems);
   renderWardrobeTable(wardrobeItems);
 }
 
-// -----------------------------------------
-// Submission
-// -----------------------------------------
+/* =========================================
+   Submission
+========================================= */
 
 function buildItemFromForm() {
   const status =
@@ -1064,9 +1181,7 @@ function buildItemFromForm() {
     wearFrequency: fieldRefs.wearFrequency.value,
     estimatedValue: Number(fieldRefs.estimatedValue.value),
     resaleWillingness: fieldRefs.resaleWillingness.value,
-    emotionalRating: multiState.emotionalRating.length
-      ? [...multiState.emotionalRating]
-      : null,
+    emotionalRating: [...multiState.emotionalRating],
     status,
     lifecycleState: status,
     dateAdded: nowISO(),
@@ -1084,6 +1199,8 @@ function validateFullForm() {
 }
 
 function resetAddItemForm() {
+  if (!addItemForm) return;
+
   addItemForm.reset();
 
   Object.keys(multiState).forEach((key) => {
@@ -1118,6 +1235,7 @@ function handleAddItemSubmit(event) {
   }
 
   const newItem = buildItemFromForm();
+
   items.push(newItem);
   saveItems();
   renderWardrobePage();
@@ -1131,12 +1249,12 @@ function handleAddItemSubmit(event) {
   setFeedback(message);
 }
 
-// -----------------------------------------
-// Single-select add-new handling
-// -----------------------------------------
+/* =========================================
+   Single-select add-new handling
+========================================= */
 
 function handleSelectAddNew(selectEl, settingsKey, placeholder, promptText) {
-  if (selectEl.value !== "__add_new__") return;
+  if (!selectEl || selectEl.value !== "__add_new__") return;
 
   const rawValue = window.prompt(promptText);
   if (!rawValue) {
@@ -1155,6 +1273,8 @@ function handleSelectAddNew(selectEl, settingsKey, placeholder, promptText) {
 function handleCategoryChange() {
   clearFeedback();
 
+  if (!fieldRefs.category) return;
+
   if (fieldRefs.category.value === "__add_new__") {
     const rawValue = window.prompt("Add new category");
     if (!rawValue) {
@@ -1164,6 +1284,7 @@ function handleCategoryChange() {
     }
 
     const storedValue = addUniqueOption(settingsData.categories, rawValue);
+
     populateSingleSelect(
       fieldRefs.category,
       settingsData.categories,
@@ -1176,7 +1297,10 @@ function handleCategoryChange() {
     }
   }
 
-  fieldRefs.itemType.value = "";
+  if (fieldRefs.itemType) {
+    fieldRefs.itemType.value = "";
+  }
+
   refreshItemTypeOptions();
   renderSectionStates();
 }
@@ -1184,12 +1308,14 @@ function handleCategoryChange() {
 function handleItemTypeChange() {
   clearFeedback();
 
+  if (!fieldRefs.itemType) return;
+
   if (fieldRefs.itemType.value !== "__add_new__") {
     renderSectionStates();
     return;
   }
 
-  const category = fieldRefs.category.value;
+  const category = fieldRefs.category?.value;
   if (!category) {
     setFeedback("Select a category before adding a new item type.");
     fieldRefs.itemType.value = "";
@@ -1216,12 +1342,31 @@ function handleItemTypeChange() {
   renderSectionStates();
 }
 
+function handleBrandChange() {
+  clearFeedback();
+
+  handleSelectAddNew(
+    fieldRefs.brand,
+    "brands",
+    "Select brand",
+    "Add new brand"
+  );
+
+  if (isSectionComplete("source")) {
+    completeSectionAndAdvance("source");
+  } else {
+    renderSectionStates();
+  }
+}
+
 function handleSourceTypeChange() {
   clearFeedback();
 
   const transferTypes = ["Hand-me-down", "Present"];
   if (
+    fieldRefs.sourceType &&
     transferTypes.includes(fieldRefs.sourceType.value) &&
+    fieldRefs.sourceLocation &&
     fieldRefs.sourceLocation.value === ""
   ) {
     fieldRefs.sourceLocation.value = "Unknown";
@@ -1251,23 +1396,6 @@ function handleSourceLocationChange() {
   }
 }
 
-function handleBrandChange() {
-  clearFeedback();
-
-  handleSelectAddNew(
-    fieldRefs.brand,
-    "brands",
-    "Select brand",
-    "Add new brand"
-  );
-
-  if (isSectionComplete("source")) {
-    completeSectionAndAdvance("source");
-  } else {
-    renderSectionStates();
-  }
-}
-
 function handleUsageFieldChange() {
   clearFeedback();
 
@@ -1278,15 +1406,9 @@ function handleUsageFieldChange() {
   }
 }
 
-// -----------------------------------------
-// Wiring
-// -----------------------------------------
-
-function wireNavigation() {
-  navControls.forEach((control) => {
-    control.addEventListener("click", handleNavClick);
-  });
-}
+/* =========================================
+   Wiring
+========================================= */
 
 function recenterSectionForField(element) {
   if (!element) return;
@@ -1319,40 +1441,52 @@ function wireSingleSelects() {
   if (fieldRefs.category) {
     fieldRefs.category.addEventListener("change", handleCategoryChange);
   }
+
   if (fieldRefs.itemType) {
     fieldRefs.itemType.addEventListener("change", handleItemTypeChange);
   }
+
   if (fieldRefs.brand) {
     fieldRefs.brand.addEventListener("change", handleBrandChange);
   }
+
   if (fieldRefs.sourceType) {
     fieldRefs.sourceType.addEventListener("change", handleSourceTypeChange);
   }
+
   if (fieldRefs.sourceLocation) {
     fieldRefs.sourceLocation.addEventListener("change", handleSourceLocationChange);
   }
+
   if (fieldRefs.wearFrequency) {
     fieldRefs.wearFrequency.addEventListener("change", handleUsageFieldChange);
   }
+
   if (fieldRefs.estimatedValue) {
     fieldRefs.estimatedValue.addEventListener("focus", () => {
       recenterSectionForField(fieldRefs.estimatedValue);
     });
+
     fieldRefs.estimatedValue.addEventListener("click", () => {
       recenterSectionForField(fieldRefs.estimatedValue);
     });
+
     fieldRefs.estimatedValue.addEventListener("input", handleUsageFieldChange);
   }
+
   if (fieldRefs.resaleWillingness) {
     fieldRefs.resaleWillingness.addEventListener("change", handleUsageFieldChange);
   }
+
   if (fieldRefs.name) {
     fieldRefs.name.addEventListener("focus", () => {
       recenterSectionForField(fieldRefs.name);
     });
+
     fieldRefs.name.addEventListener("click", () => {
       recenterSectionForField(fieldRefs.name);
     });
+
     fieldRefs.name.addEventListener("input", renderSectionStates);
   }
 }
@@ -1377,8 +1511,8 @@ function wireMultiSelects() {
   });
 
   document.addEventListener("click", (event) => {
-    const inside = event.target.closest(".multi-select");
-    if (!inside) {
+    const insideMulti = event.target.closest(".multi-select");
+    if (!insideMulti) {
       closeAllMultiPanels();
       renderAllMultiSelects();
     }
@@ -1404,9 +1538,9 @@ function initAddItemForm() {
   window.addEventListener("resize", updatePlusPosition);
 }
 
-// -----------------------------------------
-// App Init
-// -----------------------------------------
+/* =========================================
+   App Init
+========================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
   wireNavigation();
