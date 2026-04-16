@@ -646,14 +646,15 @@ function openMultiPanel(fieldKey) {
 
   if (!multiEl || !panel || !trigger) return;
 
-  const parentSection = multiEl.closest(".form-section");
-  if (parentSection) {
-    scrollSectionToViewportCenter(parentSection);
-  }
-
   multiEl.classList.add("is-open");
   panel.hidden = false;
   trigger.setAttribute("aria-expanded", "true");
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      scrollElementToWorkingCenter(trigger);
+    });
+  });
 }
 
 function handleMultiAdd(fieldKey) {
@@ -765,37 +766,63 @@ function renderSectionStates() {
   updatePlusPosition();
 }
 
-function getViewportCenterScrollTop(sectionEl) {
-  if (!sectionEl) return window.scrollY;
+function getSectionWorkingTarget(sectionEl) {
+  if (!sectionEl) return null;
 
-  const rect = sectionEl.getBoundingClientRect();
+  const openMultiTrigger = sectionEl.querySelector(
+    '.multi-select.is-open [data-multi-trigger]'
+  );
+  if (openMultiTrigger) return openMultiTrigger;
+
+  const firstPriorityField = sectionEl.querySelector(
+    'input:not([type="hidden"]), select, textarea, [data-multi-trigger]'
+  );
+  if (firstPriorityField) return firstPriorityField;
+
+  const header = sectionEl.querySelector(".form-section__header");
+  if (header) return header;
+
+  return sectionEl;
+}
+
+function getCenteredScrollTopForElement(targetEl) {
+  if (!targetEl) return window.scrollY;
+
+  const rect = targetEl.getBoundingClientRect();
   const absoluteTop = window.scrollY + rect.top;
-  const sectionHeight = rect.height;
+  const targetHeight = rect.height;
+
+  const visualCenterBias = window.innerHeight * 0.12;
 
   const targetTop =
-    absoluteTop - (window.innerHeight / 2) + (sectionHeight / 2);
+    absoluteTop - (window.innerHeight / 2) + (targetHeight / 2) + visualCenterBias;
 
   return Math.max(0, targetTop);
 }
 
-function scrollSectionToViewportCenter(sectionEl) {
-  if (!sectionEl) return;
+function scrollElementToWorkingCenter(targetEl) {
+  if (!targetEl) return;
 
   window.scrollTo({
-    top: getViewportCenterScrollTop(sectionEl),
+    top: getCenteredScrollTopForElement(targetEl),
     behavior: "smooth"
   });
 }
 
-function scrollActiveSectionToViewportCenter() {
+function scrollSectionToWorkingCenter(sectionEl) {
+  const targetEl = getSectionWorkingTarget(sectionEl);
+  scrollElementToWorkingCenter(targetEl);
+}
+
+function scrollActiveSectionToWorkingCenter() {
   const activeSection = formSections[activeSectionKey];
-  scrollSectionToViewportCenter(activeSection);
+  scrollSectionToWorkingCenter(activeSection);
 }
 
 function recenterActiveSectionAfterLayout() {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      scrollActiveSectionToViewportCenter();
+      scrollActiveSectionToWorkingCenter();
     });
   });
 }
@@ -1122,9 +1149,8 @@ function getSectionFromElement(element) {
 }
 
 function recenterSectionForField(element) {
-  const parentSection = getSectionFromElement(element);
-  if (!parentSection) return;
-  scrollSectionToViewportCenter(parentSection);
+  if (!element) return;
+  scrollElementToWorkingCenter(element);
 }
 
 function wireSingleSelects() {
