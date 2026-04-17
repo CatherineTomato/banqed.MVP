@@ -16,7 +16,7 @@
   <header class="site-header">
     <div class="site-header__inner">
       <div class="brand-block" aria-label="banqed home">
-        <a href="#add-item" class="brand-link">
+        <a href="#add-item" class="brand-link" data-section="add-item">
           <span class="brand-wordmark">banqed</span>
         </a>
       </div>
@@ -34,12 +34,15 @@
         <button type="button" class="nav-button" data-section="progress">
           Progress
         </button>
+
         <button type="button" class="nav-button" data-section="wardrobe">
           Wardrobe
         </button>
+
         <button type="button" class="nav-button" data-section="sales">
           Sales
         </button>
+
         <button
           type="button"
           class="nav-button"
@@ -47,6 +50,7 @@
         >
           Wardrobe Analytics
         </button>
+
         <button
           type="button"
           class="nav-button"
@@ -54,6 +58,7 @@
         >
           Sales Analytics
         </button>
+
         <button type="button" class="nav-button" data-section="settings">
           Settings
         </button>
@@ -62,491 +67,489 @@
   </header>
 
   <main id="main-content" class="app-main">
-<section
-  id="add-item"
-  class="app-section"
-  aria-labelledby="add-item-title"
-  data-view="add-item"
->
-  <div class="page-shell page-shell--form">
-    <div class="page-shell__body">
-      <div class="add-item-layout" id="add-item-layout">
-        <aside class="add-item-layout__aside" aria-hidden="true">
-          <div class="add-item-plus" id="add-item-plus">+</div>
-        </aside>
+    <section
+      id="add-item"
+      class="app-section"
+      aria-labelledby="add-item-title"
+      data-view="add-item"
+    >
+      <div class="page-shell page-shell--form">
+        <div class="page-shell__body">
+          <div class="add-item-layout" id="add-item-layout">
+            <aside class="add-item-layout__aside" aria-hidden="true">
+              <div class="add-item-plus" id="add-item-plus">+</div>
+            </aside>
 
-        <div class="add-item-layout__main">
-          <div class="page-shell__intro">
-            <h1 id="add-item-title" class="page-title">Add Item</h1>
-            <p class="page-description">
-              Guided item creation flow.
-            </p>
+            <div class="add-item-layout__main">
+              <div class="page-shell__intro">
+                <h1 id="add-item-title" class="page-title">Add Item</h1>
+                <p class="page-description">Guided item creation flow.</p>
+              </div>
+
+              <form id="add-item-form" class="add-item-form" novalidate>
+                <section
+                  class="form-section"
+                  id="section-identity"
+                  aria-labelledby="section-identity-title"
+                  data-section-key="identity"
+                >
+                  <div class="form-section__header">
+                    <h2 id="section-identity-title" class="form-section__title">
+                      What is it?
+                    </h2>
+                  </div>
+
+                  <div class="form-grid form-grid--single">
+                    <div class="form-field">
+                      <label for="item-name">Name this item</label>
+                      <input
+                        type="text"
+                        id="item-name"
+                        name="name"
+                        maxlength="70"
+                        required
+                        autocomplete="off"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label for="item-category">Category</label>
+                      <select id="item-category" name="category" required>
+                        <option value="">Select category</option>
+                      </select>
+                    </div>
+
+                    <div class="form-field">
+                      <label for="item-type">Item type</label>
+                      <select id="item-type" name="itemType" required>
+                        <option value="">Select item type</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label>Colour</label>
+                      <div class="multi-select" data-field="colours">
+                        <button
+                          type="button"
+                          class="multi-select__trigger"
+                          data-multi-trigger="colours"
+                          aria-expanded="false"
+                        >
+                          Select colours
+                        </button>
+
+                        <div
+                          class="multi-select__panel"
+                          data-multi-panel="colours"
+                          hidden
+                        >
+                          <div
+                            class="multi-select__options"
+                            data-multi-options="colours"
+                          ></div>
+
+                          <div class="multi-select__footer">
+                            <button
+                              type="button"
+                              class="multi-select__add"
+                              data-multi-add="colours"
+                            >
+                              + Add new
+                            </button>
+                            <button
+                              type="button"
+                              class="multi-select__save"
+                              data-multi-save="colours"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="form-field">
+                      <label>Detail</label>
+                      <div class="multi-select" data-field="details">
+                        <button
+                          type="button"
+                          class="multi-select__trigger"
+                          data-multi-trigger="details"
+                          aria-expanded="false"
+                        >
+                          Select details
+                        </button>
+
+                        <div
+                          class="multi-select__panel"
+                          data-multi-panel="details"
+                          hidden
+                        >
+                          <div
+                            class="multi-select__options"
+                            data-multi-options="details"
+                          ></div>
+
+                          <div class="multi-select__footer">
+                            <button
+                              type="button"
+                              class="multi-select__add"
+                              data-multi-add="details"
+                            >
+                              + Add new
+                            </button>
+                            <button
+                              type="button"
+                              class="multi-select__save"
+                              data-multi-save="details"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section
+                  class="form-section"
+                  id="section-wearing"
+                  aria-labelledby="section-wearing-title"
+                  data-section-key="wearing"
+                >
+                  <div class="form-section__header">
+                    <h2 id="section-wearing-title" class="form-section__title">
+                      How do you wear it?
+                    </h2>
+                  </div>
+
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label>Context</label>
+                      <div class="multi-select" data-field="contexts">
+                        <button
+                          type="button"
+                          class="multi-select__trigger"
+                          data-multi-trigger="contexts"
+                          aria-expanded="false"
+                        >
+                          Select contexts
+                        </button>
+
+                        <div
+                          class="multi-select__panel"
+                          data-multi-panel="contexts"
+                          hidden
+                        >
+                          <div
+                            class="multi-select__options"
+                            data-multi-options="contexts"
+                          ></div>
+
+                          <div class="multi-select__footer">
+                            <button
+                              type="button"
+                              class="multi-select__add"
+                              data-multi-add="contexts"
+                            >
+                              + Add new
+                            </button>
+                            <button
+                              type="button"
+                              class="multi-select__save"
+                              data-multi-save="contexts"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="form-field">
+                      <label>Style</label>
+                      <div class="multi-select" data-field="styles">
+                        <button
+                          type="button"
+                          class="multi-select__trigger"
+                          data-multi-trigger="styles"
+                          aria-expanded="false"
+                        >
+                          Select styles
+                        </button>
+
+                        <div
+                          class="multi-select__panel"
+                          data-multi-panel="styles"
+                          hidden
+                        >
+                          <div
+                            class="multi-select__options"
+                            data-multi-options="styles"
+                          ></div>
+
+                          <div class="multi-select__footer">
+                            <button
+                              type="button"
+                              class="multi-select__add"
+                              data-multi-add="styles"
+                            >
+                              + Add new
+                            </button>
+                            <button
+                              type="button"
+                              class="multi-select__save"
+                              data-multi-save="styles"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section
+                  class="form-section"
+                  id="section-source"
+                  aria-labelledby="section-source-title"
+                  data-section-key="source"
+                >
+                  <div class="form-section__header">
+                    <h2 id="section-source-title" class="form-section__title">
+                      Where is it from?
+                    </h2>
+                  </div>
+
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label for="item-brand">Brand</label>
+                      <select id="item-brand" name="brand">
+                        <option value="">Select brand</option>
+                      </select>
+                    </div>
+
+                    <div class="form-field">
+                      <label for="item-source-type">Source type</label>
+                      <select id="item-source-type" name="sourceType">
+                        <option value="">Select source type</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-grid form-grid--single">
+                    <div class="form-field">
+                      <label for="item-source-location">Source location</label>
+                      <select id="item-source-location" name="sourceLocation">
+                        <option value="">Select source location</option>
+                      </select>
+                    </div>
+                  </div>
+                </section>
+
+                <section
+                  class="form-section"
+                  id="section-usage"
+                  aria-labelledby="section-usage-title"
+                  data-section-key="usage"
+                >
+                  <div class="form-section__header">
+                    <h2 id="section-usage-title" class="form-section__title">
+                      Usage + value
+                    </h2>
+                  </div>
+
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label for="item-wear-frequency">Wear frequency</label>
+                      <select
+                        id="item-wear-frequency"
+                        name="wearFrequency"
+                        required
+                      >
+                        <option value="">Select wear frequency</option>
+                      </select>
+                    </div>
+
+                    <div class="form-field">
+                      <label for="item-estimated-value">Estimated resale value</label>
+                      <input
+                        type="number"
+                        id="item-estimated-value"
+                        name="estimatedValue"
+                        min="0"
+                        step="0.01"
+                        required
+                        inputmode="decimal"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="form-grid form-grid--single">
+                    <div class="form-field">
+                      <label for="item-resale-willingness">Resale willingness</label>
+                      <select
+                        id="item-resale-willingness"
+                        name="resaleWillingness"
+                        required
+                      >
+                        <option value="">Select resale willingness</option>
+                      </select>
+                    </div>
+                  </div>
+                </section>
+
+                <section
+                  class="form-section"
+                  id="section-emotion"
+                  aria-labelledby="section-emotion-title"
+                  data-section-key="emotion"
+                >
+                  <div class="form-section__header">
+                    <h2 id="section-emotion-title" class="form-section__title">
+                      How do you feel about it?
+                    </h2>
+                  </div>
+
+                  <div class="form-grid form-grid--single">
+                    <div class="form-field">
+                      <label>Emotional rating</label>
+                      <div class="multi-select" data-field="emotionalRating">
+                        <button
+                          type="button"
+                          class="multi-select__trigger"
+                          data-multi-trigger="emotionalRating"
+                          aria-expanded="false"
+                        >
+                          Select emotional rating
+                        </button>
+
+                        <div
+                          class="multi-select__panel"
+                          data-multi-panel="emotionalRating"
+                          hidden
+                        >
+                          <div
+                            class="multi-select__options"
+                            data-multi-options="emotionalRating"
+                          ></div>
+
+                          <div class="multi-select__footer">
+                            <button
+                              type="button"
+                              class="multi-select__save"
+                              data-multi-save="emotionalRating"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="submit" class="button-primary">
+                      Add item
+                    </button>
+                    <p id="form-feedback" class="form-feedback" aria-live="polite"></p>
+                  </div>
+                </section>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section
+      id="wardrobe"
+      class="app-section"
+      aria-labelledby="wardrobe-title"
+      data-view="wardrobe"
+    >
+      <div class="page-shell wardrobe-page">
+        <div class="wardrobe-header">
+          <div class="wardrobe-header__intro">
+            <h1 id="wardrobe-title" class="wardrobe-header__title">Wardrobe</h1>
+
+            <div class="wardrobe-metrics-inline">
+              <p>
+                <span id="wardrobe-item-count">0</span> items
+              </p>
+              <p>
+                <span id="wardrobe-total-value">€0</span> estimated resale value
+              </p>
+            </div>
           </div>
 
-          <form id="add-item-form" class="add-item-form" novalidate>
-            <section
-              class="form-section"
-              id="section-identity"
-              aria-labelledby="section-identity-title"
-              data-section-key="identity"
+          <div class="wardrobe-header__controls">
+            <div class="wardrobe-controls-stack">
+              <button type="button" class="wardrobe-control-button">
+                Filter
+              </button>
+              <button type="button" class="wardrobe-control-button">
+                Sort
+              </button>
+            </div>
+
+            <button
+              type="button"
+              class="wardrobe-add-button"
+              data-section="add-item"
+              aria-label="Add item"
             >
-              <div class="form-section__header">
-                <h2 id="section-identity-title" class="form-section__title">
-                  What is it?
-                </h2>
-              </div>
-
-              <div class="form-grid form-grid--single">
-                <div class="form-field">
-                  <label for="item-name">Name this item</label>
-                  <input
-                    type="text"
-                    id="item-name"
-                    name="name"
-                    maxlength="70"
-                    required
-                    autocomplete="off"
-                  />
-                </div>
-              </div>
-
-              <div class="form-grid">
-                <div class="form-field">
-                  <label for="item-category">Category</label>
-                  <select id="item-category" name="category" required>
-                    <option value="">Select category</option>
-                  </select>
-                </div>
-
-                <div class="form-field">
-                  <label for="item-type">Item type</label>
-                  <select id="item-type" name="itemType" required>
-                    <option value="">Select item type</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-grid">
-                <div class="form-field">
-                  <label>Colour</label>
-                  <div class="multi-select" data-field="colours">
-                    <button
-                      type="button"
-                      class="multi-select__trigger"
-                      data-multi-trigger="colours"
-                      aria-expanded="false"
-                    >
-                      Select colours
-                    </button>
-
-                    <div
-                      class="multi-select__panel"
-                      data-multi-panel="colours"
-                      hidden
-                    >
-                      <div
-                        class="multi-select__options"
-                        data-multi-options="colours"
-                      ></div>
-
-                      <div class="multi-select__footer">
-                        <button
-                          type="button"
-                          class="multi-select__add"
-                          data-multi-add="colours"
-                        >
-                          + Add new
-                        </button>
-                        <button
-                          type="button"
-                          class="multi-select__save"
-                          data-multi-save="colours"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="form-field">
-                  <label>Detail</label>
-                  <div class="multi-select" data-field="details">
-                    <button
-                      type="button"
-                      class="multi-select__trigger"
-                      data-multi-trigger="details"
-                      aria-expanded="false"
-                    >
-                      Select details
-                    </button>
-
-                    <div
-                      class="multi-select__panel"
-                      data-multi-panel="details"
-                      hidden
-                    >
-                      <div
-                        class="multi-select__options"
-                        data-multi-options="details"
-                      ></div>
-
-                      <div class="multi-select__footer">
-                        <button
-                          type="button"
-                          class="multi-select__add"
-                          data-multi-add="details"
-                        >
-                          + Add new
-                        </button>
-                        <button
-                          type="button"
-                          class="multi-select__save"
-                          data-multi-save="details"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section
-              class="form-section"
-              id="section-wearing"
-              aria-labelledby="section-wearing-title"
-              data-section-key="wearing"
-            >
-              <div class="form-section__header">
-                <h2 id="section-wearing-title" class="form-section__title">
-                  How do you wear it?
-                </h2>
-              </div>
-
-              <div class="form-grid">
-                <div class="form-field">
-                  <label>Context</label>
-                  <div class="multi-select" data-field="contexts">
-                    <button
-                      type="button"
-                      class="multi-select__trigger"
-                      data-multi-trigger="contexts"
-                      aria-expanded="false"
-                    >
-                      Select contexts
-                    </button>
-
-                    <div
-                      class="multi-select__panel"
-                      data-multi-panel="contexts"
-                      hidden
-                    >
-                      <div
-                        class="multi-select__options"
-                        data-multi-options="contexts"
-                      ></div>
-
-                      <div class="multi-select__footer">
-                        <button
-                          type="button"
-                          class="multi-select__add"
-                          data-multi-add="contexts"
-                        >
-                          + Add new
-                        </button>
-                        <button
-                          type="button"
-                          class="multi-select__save"
-                          data-multi-save="contexts"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="form-field">
-                  <label>Style</label>
-                  <div class="multi-select" data-field="styles">
-                    <button
-                      type="button"
-                      class="multi-select__trigger"
-                      data-multi-trigger="styles"
-                      aria-expanded="false"
-                    >
-                      Select styles
-                    </button>
-
-                    <div
-                      class="multi-select__panel"
-                      data-multi-panel="styles"
-                      hidden
-                    >
-                      <div
-                        class="multi-select__options"
-                        data-multi-options="styles"
-                      ></div>
-
-                      <div class="multi-select__footer">
-                        <button
-                          type="button"
-                          class="multi-select__add"
-                          data-multi-add="styles"
-                        >
-                          + Add new
-                        </button>
-                        <button
-                          type="button"
-                          class="multi-select__save"
-                          data-multi-save="styles"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section
-              class="form-section"
-              id="section-source"
-              aria-labelledby="section-source-title"
-              data-section-key="source"
-            >
-              <div class="form-section__header">
-                <h2 id="section-source-title" class="form-section__title">
-                  Where is it from?
-                </h2>
-              </div>
-
-              <div class="form-grid">
-                <div class="form-field">
-                  <label for="item-brand">Brand</label>
-                  <select id="item-brand" name="brand">
-                    <option value="">Select brand</option>
-                  </select>
-                </div>
-
-                <div class="form-field">
-                  <label for="item-source-type">Source type</label>
-                  <select id="item-source-type" name="sourceType">
-                    <option value="">Select source type</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-grid form-grid--single">
-                <div class="form-field">
-                  <label for="item-source-location">Source location</label>
-                  <select id="item-source-location" name="sourceLocation">
-                    <option value="">Select source location</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            <section
-              class="form-section"
-              id="section-usage"
-              aria-labelledby="section-usage-title"
-              data-section-key="usage"
-            >
-              <div class="form-section__header">
-                <h2 id="section-usage-title" class="form-section__title">
-                  Usage + value
-                </h2>
-              </div>
-
-              <div class="form-grid">
-                <div class="form-field">
-                  <label for="item-wear-frequency">Wear frequency</label>
-                  <select
-                    id="item-wear-frequency"
-                    name="wearFrequency"
-                    required
-                  >
-                    <option value="">Select wear frequency</option>
-                  </select>
-                </div>
-
-                <div class="form-field">
-                  <label for="item-estimated-value">Estimated resale value</label>
-                  <input
-                    type="number"
-                    id="item-estimated-value"
-                    name="estimatedValue"
-                    min="0"
-                    step="0.01"
-                    required
-                    inputmode="decimal"
-                  />
-                </div>
-              </div>
-
-              <div class="form-grid form-grid--single">
-                <div class="form-field">
-                  <label for="item-resale-willingness">Resale willingness</label>
-                  <select
-                    id="item-resale-willingness"
-                    name="resaleWillingness"
-                    required
-                  >
-                    <option value="">Select resale willingness</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            <section
-              class="form-section"
-              id="section-emotion"
-              aria-labelledby="section-emotion-title"
-              data-section-key="emotion"
-            >
-              <div class="form-section__header">
-                <h2 id="section-emotion-title" class="form-section__title">
-                  How do you feel about it?
-                </h2>
-              </div>
-
-              <div class="form-grid form-grid--single">
-                <div class="form-field">
-                  <label>Emotional rating</label>
-                  <div class="multi-select" data-field="emotionalRating">
-                    <button
-                      type="button"
-                      class="multi-select__trigger"
-                      data-multi-trigger="emotionalRating"
-                      aria-expanded="false"
-                    >
-                      Select emotional rating
-                    </button>
-
-                    <div
-                      class="multi-select__panel"
-                      data-multi-panel="emotionalRating"
-                      hidden
-                    >
-                      <div
-                        class="multi-select__options"
-                        data-multi-options="emotionalRating"
-                      ></div>
-
-                      <div class="multi-select__footer">
-                        <button
-                          type="button"
-                          class="multi-select__save"
-                          data-multi-save="emotionalRating"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-actions">
-                <button type="submit" class="button-primary">
-                  Add item
-                </button>
-                <p id="form-feedback" class="form-feedback" aria-live="polite"></p>
-              </div>
-            </section>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section
- 
-<section
-  id="wardrobe"
-  class="app-section"
-  aria-labelledby="wardrobe-title"
-  data-view="wardrobe"
->
-  <div class="page-shell wardrobe-page">
-    <div class="wardrobe-header">
-      <div class="wardrobe-header__intro">
-        <h1 id="wardrobe-title" class="page-title">Wardrobe</h1>
-
-        <div class="wardrobe-metrics-inline">
-          <p>
-            <span id="wardrobe-item-count">0</span> items
-          </p>
-          <p>
-            <span id="wardrobe-total-value">€0</span> estimated resale value
-          </p>
-        </div>
-      </div>
-
-      <div class="wardrobe-header__controls">
-        <div class="wardrobe-controls-stack">
-          <button type="button" class="wardrobe-control-button">
-            Filter
-          </button>
-          <button type="button" class="wardrobe-control-button">
-            Sort
-          </button>
+              +
+            </button>
+          </div>
         </div>
 
-        <button
-          type="button"
-          class="wardrobe-add-button"
-          data-section="add-item"
-          aria-label="Add item"
+        <div
+          id="wardrobe-empty-state"
+          class="wardrobe-empty-state"
+          hidden
         >
-          +
-        </button>
+          <h2 class="wardrobe-empty-state__title">No items in your wardrobe yet.</h2>
+          <p class="wardrobe-empty-state__text">
+            Add your first item to begin building your wardrobe inventory.
+          </p>
+          <button
+            type="button"
+            class="button-primary wardrobe-empty-state__button"
+            data-section="add-item"
+          >
+            Add item
+          </button>
+        </div>
+
+        <div id="wardrobe-table-wrap" class="wardrobe-table-wrap" hidden>
+          <table class="wardrobe-table">
+            <thead>
+              <tr>
+                <th scope="col">Item</th>
+                <th scope="col">Colour</th>
+                <th scope="col">Detail</th>
+                <th scope="col">Context</th>
+                <th scope="col">Style</th>
+                <th scope="col">Brand</th>
+                <th scope="col">Source</th>
+                <th scope="col">Wear frequency</th>
+                <th scope="col">Resale willingness</th>
+                <th scope="col">Emotional rating</th>
+                <th scope="col">Est. resale value</th>
+              </tr>
+            </thead>
+            <tbody id="wardrobe-table-body"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
-
-    <div
-      id="wardrobe-empty-state"
-      class="wardrobe-empty-state"
-      hidden
-    >
-      <h2>No items in your wardrobe yet.</h2>
-      <p>Add your first item to begin building your wardrobe inventory.</p>
-      <button
-        type="button"
-        class="button-primary wardrobe-empty-state__button"
-        data-section="add-item"
-      >
-        Add item
-      </button>
-    </div>
-
-    <div id="wardrobe-table-wrap" class="wardrobe-table-wrap" hidden>
-      <table class="wardrobe-table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Colour</th>
-            <th>Detail</th>
-            <th>Context</th>
-            <th>Style</th>
-            <th>Brand</th>
-            <th>Source</th>
-            <th>Wear frequency</th>
-            <th>Resale willingness</th>
-            <th>How do you feel about it?</th>
-            <th>Est. resale value</th>
-          </tr>
-        </thead>
-        <tbody id="wardrobe-table-body"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
+    </section>
 
     <section
       id="sales"
