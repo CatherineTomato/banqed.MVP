@@ -1018,9 +1018,9 @@ function validateSection(key) {
   return null;
 }
 
-/* =========================================
-   Wardrobe page rendering
-========================================= */
+// -----------------------------------------
+// Wardrobe page rendering
+// -----------------------------------------
 
 function getWardrobeItems() {
   return items.filter((item) => getItemLifecycleState(item) === "wardrobe");
@@ -1047,26 +1047,20 @@ function renderTokenGroup(values) {
 
   return `
     <div class="wardrobe-token-group">
-      ${values
-        .map((value) => `<span class="wardrobe-token">${escapeHtml(value)}.</span>`)
-        .join("")}
+      <span class="wardrobe-token">${escapeHtml(values.join(". "))}.</span>
     </div>
   `;
 }
 
 function renderSourceToken(item) {
-  const parts = [];
-
-  if (item.sourceLocation) parts.push(item.sourceLocation);
-  if (item.sourceType) parts.push(item.sourceType);
-
-  if (!parts.length) {
+  if (!item.sourceLocation && !item.sourceType) {
     return `<span class="wardrobe-token wardrobe-token--muted">—</span>`;
   }
 
   return `
     <div class="wardrobe-token-group">
-      <span class="wardrobe-token">${escapeHtml(parts.join(". "))}.</span>
+      ${item.sourceLocation ? `<span class="wardrobe-token">${escapeHtml(item.sourceLocation)}.</span>` : ""}
+      ${item.sourceType ? `<span class="wardrobe-token">${escapeHtml(item.sourceType)}.</span>` : ""}
     </div>
   `;
 }
@@ -1091,15 +1085,21 @@ function createWardrobeRowMarkup(item) {
   return `
     <tr data-item-id="${escapeHtml(item.id)}">
       <td class="wardrobe-table__item-cell">
-        <p class="wardrobe-table__item-name">${escapeHtml(
-          item.name || "Untitled item"
-        )}</p>
-        <div class="wardrobe-table__item-tags">
-          ${renderSingleToken(item.category)}
-          ${renderSingleToken(item.itemType)}
+        <div class="wardrobe-table__item-inner">
+          <p class="wardrobe-table__item-name">${escapeHtml(
+            item.name || "Untitled item"
+          )}</p>
+          <div class="wardrobe-table__item-tags">
+            ${renderSingleToken(item.category)}
+            ${renderSingleToken(item.itemType)}
+          </div>
         </div>
       </td>
-      <td>${renderTokenGroup(item.colours)}</td>
+
+      <td class="wardrobe-table__divider-cell">
+        ${renderTokenGroup(item.colours)}
+      </td>
+
       <td>${renderTokenGroup(item.details)}</td>
       <td>${renderTokenGroup(item.contexts)}</td>
       <td>${renderTokenGroup(item.styles)}</td>
@@ -1108,17 +1108,20 @@ function createWardrobeRowMarkup(item) {
       <td>${renderSingleToken(item.wearFrequency)}</td>
       <td>${renderSingleToken(item.resaleWillingness)}</td>
       <td>${emotionalMarkup}</td>
-      <td>
+
+      <td class="wardrobe-table__value-cell">
         <button
-          type="button"
-          class="wardrobe-table__actions-button"
-          aria-label="Edit item"
-        >
-          …
-        </button>
-        <p class="wardrobe-table__value">${formatCurrency(
-          item.estimatedValue
-        )}</p>
+  type="button"
+  class="wardrobe-table__actions-button"
+  aria-label="Open item menu"
+>
+  <span class="wardrobe-dots">
+    <span></span>
+    <span></span>
+    <span></span>
+  </span>
+</button>
+        <p class="wardrobe-table__value">${formatCurrency(item.estimatedValue)}</p>
       </td>
     </tr>
   `;
@@ -1142,10 +1145,12 @@ function renderWardrobeEmptyState(wardrobeItems) {
 
   if (wardrobeRefs.emptyState) {
     wardrobeRefs.emptyState.hidden = hasItems;
+    wardrobeRefs.emptyState.setAttribute("aria-hidden", String(hasItems));
   }
 
   if (wardrobeRefs.tableWrap) {
     wardrobeRefs.tableWrap.hidden = !hasItems;
+    wardrobeRefs.tableWrap.setAttribute("aria-hidden", String(!hasItems));
   }
 }
 
