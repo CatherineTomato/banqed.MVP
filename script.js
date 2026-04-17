@@ -1,11 +1,11 @@
 // =========================================
 // banqed MVP - App Shell + Settings + Items
-// Full Add Item workflow + Wardrobe render
+// Tightened v2
 // =========================================
 
-/* =========================================
-   Navigation
-========================================= */
+// -----------------------------------------
+// Navigation
+// -----------------------------------------
 
 const navControls = document.querySelectorAll("[data-section]");
 const appSections = document.querySelectorAll(".app-section");
@@ -30,20 +30,20 @@ function showSection(sectionId) {
 }
 
 function handleNavClick(event) {
-  const target = event.currentTarget?.dataset?.section;
-  if (!target) return;
-  showSection(target);
+  const targetSection = event.currentTarget?.dataset?.section;
+  if (!targetSection) return;
+  showSection(targetSection);
 }
 
 function wireNavigation() {
-  document.querySelectorAll("[data-section]").forEach((control) => {
+  navControls.forEach((control) => {
     control.addEventListener("click", handleNavClick);
   });
 }
 
-/* =========================================
-   Shared Settings Data Layer
-========================================= */
+// -----------------------------------------
+// Shared Settings Data Layer
+// -----------------------------------------
 
 function normalizeValue(value) {
   return String(value || "").trim().replace(/\s+/g, " ");
@@ -315,12 +315,20 @@ const defaultSettingsData = {
   ]
 };
 
+function cloneDefaultSettings() {
+  if (typeof structuredClone === "function") {
+    return structuredClone(defaultSettingsData);
+  }
+
+  return JSON.parse(JSON.stringify(defaultSettingsData));
+}
+
 function loadSettings() {
   try {
     const stored = JSON.parse(localStorage.getItem("settings"));
-    return stored || structuredClone(defaultSettingsData);
+    return stored || cloneDefaultSettings();
   } catch {
-    return structuredClone(defaultSettingsData);
+    return cloneDefaultSettings();
   }
 }
 
@@ -330,9 +338,9 @@ function saveSettings() {
   localStorage.setItem("settings", JSON.stringify(settingsData));
 }
 
-/* =========================================
-   Shared Item Store
-========================================= */
+// -----------------------------------------
+// Shared Item Store
+// -----------------------------------------
 
 function loadItems() {
   try {
@@ -349,9 +357,9 @@ function saveItems() {
   localStorage.setItem("items", JSON.stringify(items));
 }
 
-/* =========================================
-   Utilities
-========================================= */
+// -----------------------------------------
+// Utilities
+// -----------------------------------------
 
 function generateId() {
   if (window.crypto && crypto.randomUUID) {
@@ -377,9 +385,7 @@ function deriveSourceChannel(sourceType) {
 }
 
 function sortCaseInsensitive(values) {
-  values.sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: "base" })
-  );
+  values.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 }
 
 function addUniqueOption(targetArray, newValue) {
@@ -422,9 +428,9 @@ function getItemLifecycleState(item) {
   return item.lifecycleState || item.status || "wardrobe";
 }
 
-/* =========================================
-   DOM refs
-========================================= */
+// -----------------------------------------
+// DOM refs
+// -----------------------------------------
 
 const addItemForm = document.getElementById("add-item-form");
 const feedbackEl = document.getElementById("form-feedback");
@@ -512,21 +518,25 @@ const formSections = {
   emotion: document.getElementById("section-emotion")
 };
 
-/* =========================================
-   Feedback
-========================================= */
+// -----------------------------------------
+// Feedback
+// -----------------------------------------
 
 function clearFeedback() {
-  if (feedbackEl) feedbackEl.textContent = "";
+  if (feedbackEl) {
+    feedbackEl.textContent = "";
+  }
 }
 
 function setFeedback(message) {
-  if (feedbackEl) feedbackEl.textContent = message;
+  if (feedbackEl) {
+    feedbackEl.textContent = message;
+  }
 }
 
-/* =========================================
-   Single-select population
-========================================= */
+// -----------------------------------------
+// Single-select population
+// -----------------------------------------
 
 function populateSingleSelect(
   selectEl,
@@ -617,9 +627,9 @@ function populateSingleDropdowns() {
   );
 }
 
-/* =========================================
-   Multi-select rendering
-========================================= */
+// -----------------------------------------
+// Multi-select rendering
+// -----------------------------------------
 
 function formatMultiTriggerLabel(fieldKey) {
   const values = multiState[fieldKey];
@@ -655,16 +665,14 @@ function toggleDraftSelection(fieldKey, value) {
 
 function renderMultiSelect(fieldKey) {
   const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
-  const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
   const optionsWrap = document.querySelector(
     `[data-multi-options="${fieldKey}"]`
   );
 
-  if (!trigger || !panel || !optionsWrap) return;
+  if (!trigger || !optionsWrap) return;
 
   const config = multiConfig[fieldKey];
   const options = settingsData[config.optionsKey];
-
   optionsWrap.innerHTML = "";
 
   options.forEach((value) => {
@@ -717,7 +725,9 @@ function openMultiPanel(fieldKey) {
   cloneCommittedStateToDraft(fieldKey);
   renderMultiSelect(fieldKey);
 
-  const multiEl = document.querySelector(`.multi-select[data-field="${fieldKey}"]`);
+  const multiEl = document.querySelector(
+    `.multi-select[data-field="${fieldKey}"]`
+  );
   const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
   const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
 
@@ -767,17 +777,14 @@ function saveMultiPanel(fieldKey) {
   if (!parentSection) return;
 
   const sectionKey = parentSection.dataset.sectionKey;
+  if (!sectionKey) return;
 
-  if (sectionKey && isSectionComplete(sectionKey)) {
-    completeSectionAndAdvance(sectionKey);
-  } else {
-    renderSectionStates();
-  }
+  updateSectionProgress(sectionKey);
 }
 
-/* =========================================
-   Section state
-========================================= */
+// -----------------------------------------
+// Section state
+// -----------------------------------------
 
 function getSectionIndex(key) {
   return sectionOrder.indexOf(key);
@@ -795,10 +802,7 @@ function isSectionComplete(key) {
   }
 
   if (key === "wearing") {
-    return (
-      multiState.contexts.length > 0 &&
-      multiState.styles.length > 0
-    );
+    return multiState.contexts.length > 0 && multiState.styles.length > 0;
   }
 
   if (key === "source") {
@@ -930,11 +934,17 @@ function completeSectionAndAdvance(sectionKey) {
 
   if (nextKey) {
     activeSectionKey = nextKey;
-    renderSectionStates();
-    recenterActiveSectionAfterLayout();
+  }
+
+  renderSectionStates();
+  recenterActiveSectionAfterLayout();
+}
+
+function updateSectionProgress(sectionKey) {
+  if (isSectionComplete(sectionKey)) {
+    completeSectionAndAdvance(sectionKey);
   } else {
     renderSectionStates();
-    recenterActiveSectionAfterLayout();
   }
 }
 
@@ -1078,9 +1088,7 @@ function renderWardrobeMetrics(wardrobeItems) {
 }
 
 function createWardrobeRowMarkup(item) {
-  const emotionalMarkup = Array.isArray(item.emotionalRating)
-    ? renderTokenGroup(item.emotionalRating)
-    : renderSingleToken(item.emotionalRating);
+  const emotionalMarkup = renderSingleToken(item.emotionalRating);
 
   return `
     <tr data-item-id="${escapeHtml(item.id)}">
@@ -1111,16 +1119,16 @@ function createWardrobeRowMarkup(item) {
 
       <td class="wardrobe-table__value-cell">
         <button
-  type="button"
-  class="wardrobe-table__actions-button"
-  aria-label="Open item menu"
->
-  <span class="wardrobe-dots">
-    <span></span>
-    <span></span>
-    <span></span>
-  </span>
-</button>
+          type="button"
+          class="wardrobe-table__actions-button"
+          aria-label="Open item menu"
+        >
+          <span class="wardrobe-dots" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
         <p class="wardrobe-table__value">${formatCurrency(item.estimatedValue)}</p>
       </td>
     </tr>
@@ -1162,12 +1170,20 @@ function renderWardrobePage() {
   renderWardrobeTable(wardrobeItems);
 }
 
-/* =========================================
-   Submission
-========================================= */
+// -----------------------------------------
+// App rendering
+// -----------------------------------------
+
+function renderApp() {
+  renderWardrobePage();
+}
+
+// -----------------------------------------
+// Submission
+// -----------------------------------------
 
 function buildItemFromForm() {
-  const status =
+  const lifecycleState =
     fieldRefs.resaleWillingness.value === "Sell now" ? "sales" : "wardrobe";
 
   return {
@@ -1186,9 +1202,9 @@ function buildItemFromForm() {
     wearFrequency: fieldRefs.wearFrequency.value,
     estimatedValue: Number(fieldRefs.estimatedValue.value),
     resaleWillingness: fieldRefs.resaleWillingness.value,
-    emotionalRating: [...multiState.emotionalRating],
-    status,
-    lifecycleState: status,
+    emotionalRating: multiState.emotionalRating[0] || null,
+    status: lifecycleState,
+    lifecycleState,
     dateAdded: nowISO(),
     dateUpdated: nowISO()
   };
@@ -1197,7 +1213,9 @@ function buildItemFromForm() {
 function validateFullForm() {
   for (const key of ["identity", "wearing", "source", "usage"]) {
     const error = validateSection(key);
-    if (error) return { key, error };
+    if (error) {
+      return { key, error };
+    }
   }
 
   return null;
@@ -1240,23 +1258,20 @@ function handleAddItemSubmit(event) {
   }
 
   const newItem = buildItemFromForm();
-
   items.push(newItem);
   saveItems();
-  renderWardrobePage();
+  renderApp();
 
   const destinationLabel =
-    newItem.status === "sales" ? "Sales" : "Wardrobe";
-
-  const message = `"${newItem.name}" added to ${destinationLabel}.`;
+    newItem.lifecycleState === "sales" ? "Sales" : "Wardrobe";
 
   resetAddItemForm();
-  setFeedback(message);
+  setFeedback(`"${newItem.name}" added to ${destinationLabel}.`);
 }
 
-/* =========================================
-   Single-select add-new handling
-========================================= */
+// -----------------------------------------
+// Single-select add-new handling
+// -----------------------------------------
 
 function handleSelectAddNew(selectEl, settingsKey, placeholder, promptText) {
   if (!selectEl || selectEl.value !== "__add_new__") return;
@@ -1277,7 +1292,6 @@ function handleSelectAddNew(selectEl, settingsKey, placeholder, promptText) {
 
 function handleCategoryChange() {
   clearFeedback();
-
   if (!fieldRefs.category) return;
 
   if (fieldRefs.category.value === "__add_new__") {
@@ -1312,7 +1326,6 @@ function handleCategoryChange() {
 
 function handleItemTypeChange() {
   clearFeedback();
-
   if (!fieldRefs.itemType) return;
 
   if (fieldRefs.itemType.value !== "__add_new__") {
@@ -1357,11 +1370,7 @@ function handleBrandChange() {
     "Add new brand"
   );
 
-  if (isSectionComplete("source")) {
-    completeSectionAndAdvance("source");
-  } else {
-    renderSectionStates();
-  }
+  updateSectionProgress("source");
 }
 
 function handleSourceTypeChange() {
@@ -1377,11 +1386,7 @@ function handleSourceTypeChange() {
     fieldRefs.sourceLocation.value = "Unknown";
   }
 
-  if (isSectionComplete("source")) {
-    completeSectionAndAdvance("source");
-  } else {
-    renderSectionStates();
-  }
+  updateSectionProgress("source");
 }
 
 function handleSourceLocationChange() {
@@ -1394,26 +1399,17 @@ function handleSourceLocationChange() {
     "Add new source location"
   );
 
-  if (isSectionComplete("source")) {
-    completeSectionAndAdvance("source");
-  } else {
-    renderSectionStates();
-  }
+  updateSectionProgress("source");
 }
 
 function handleUsageFieldChange() {
   clearFeedback();
-
-  if (isSectionComplete("usage")) {
-    completeSectionAndAdvance("usage");
-  } else {
-    renderSectionStates();
-  }
+  updateSectionProgress("usage");
 }
 
-/* =========================================
-   Wiring
-========================================= */
+// -----------------------------------------
+// Wiring
+// -----------------------------------------
 
 function recenterSectionForField(element) {
   if (!element) return;
@@ -1543,13 +1539,13 @@ function initAddItemForm() {
   window.addEventListener("resize", updatePlusPosition);
 }
 
-/* =========================================
-   App Init
-========================================= */
+// -----------------------------------------
+// App init
+// -----------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
   wireNavigation();
   showSection("add-item");
   initAddItemForm();
-  renderWardrobePage();
+  renderApp();
 });
