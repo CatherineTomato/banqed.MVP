@@ -1,12 +1,3 @@
-// =========================================
-// banqed MVP - App Shell + Settings + Items
-// Tightened v2
-// =========================================
-
-// -----------------------------------------
-// Navigation
-// -----------------------------------------
-
 const navControls = document.querySelectorAll("[data-section]");
 const appSections = document.querySelectorAll(".app-section");
 
@@ -40,10 +31,6 @@ function wireNavigation() {
     control.addEventListener("click", handleNavClick);
   });
 }
-
-// -----------------------------------------
-// Shared Settings Data Layer
-// -----------------------------------------
 
 function normalizeValue(value) {
   return String(value || "").trim().replace(/\s+/g, " ");
@@ -107,17 +94,8 @@ const defaultSettingsData = {
       "Evening dress",
       "Jumpsuit"
     ],
-    Shorts: [
-      "Denim shorts",
-      "Cargo shorts",
-      "Sports shorts"
-    ],
-    Skirts: [
-      "Mini skirt",
-      "Midi skirt",
-      "Maxi skirt",
-      "Tennis skirt"
-    ],
+    Shorts: ["Denim shorts", "Cargo shorts", "Sports shorts"],
+    Skirts: ["Mini skirt", "Midi skirt", "Maxi skirt", "Tennis skirt"],
     Jackets: [
       "Leather jacket",
       "Denim jacket",
@@ -338,10 +316,6 @@ function saveSettings() {
   localStorage.setItem("settings", JSON.stringify(settingsData));
 }
 
-// -----------------------------------------
-// Shared Item Store
-// -----------------------------------------
-
 function loadItems() {
   try {
     const stored = JSON.parse(localStorage.getItem("items"));
@@ -356,10 +330,6 @@ let items = loadItems();
 function saveItems() {
   localStorage.setItem("items", JSON.stringify(items));
 }
-
-// -----------------------------------------
-// Utilities
-// -----------------------------------------
 
 function generateId() {
   if (window.crypto && crypto.randomUUID) {
@@ -427,10 +397,6 @@ function escapeHtml(value) {
 function getItemLifecycleState(item) {
   return item.lifecycleState || item.status || "wardrobe";
 }
-
-// -----------------------------------------
-// DOM refs
-// -----------------------------------------
 
 const addItemForm = document.getElementById("add-item-form");
 const feedbackEl = document.getElementById("form-feedback");
@@ -518,32 +484,64 @@ const formSections = {
   emotion: document.getElementById("section-emotion")
 };
 
-// -----------------------------------------
-// Feedback
-// -----------------------------------------
+const wardrobeQueryState = {
+  filters: {
+    category: [],
+    colours: [],
+    brand: [],
+    wearFrequency: [],
+    resaleWillingness: [],
+    emotionalRating: [],
+    estimatedValue: {
+      min: "",
+      max: ""
+    }
+  },
+  sort: {
+    option: ""
+  }
+};
+
+const wardrobeQueryRefs = {
+  filterTrigger: document.getElementById("wardrobe-filter-trigger"),
+  sortTrigger: document.getElementById("wardrobe-sort-trigger"),
+  filterPanel: document.getElementById("wardrobe-filter-panel"),
+  sortPanel: document.getElementById("wardrobe-sort-panel"),
+  activeBar: document.getElementById("wardrobe-active-query-bar"),
+  activeTokens: document.getElementById("wardrobe-active-query-tokens"),
+  clearQuery: document.getElementById("wardrobe-clear-query"),
+  clearQueryEmpty: document.getElementById("wardrobe-clear-query-empty"),
+  noResults: document.getElementById("wardrobe-no-results"),
+  filterCategory: document.getElementById("filter-category"),
+  filterColours: document.getElementById("filter-colours"),
+  filterBrand: document.getElementById("filter-brand"),
+  filterWearFrequency: document.getElementById("filter-wear-frequency"),
+  filterResaleWillingness: document.getElementById("filter-resale-willingness"),
+  filterEmotionalRating: document.getElementById("filter-emotional-rating"),
+  filterValueMin: document.getElementById("filter-value-min"),
+  filterValueMax: document.getElementById("filter-value-max"),
+  sortOption: document.getElementById("sort-option")
+};
+
+const emotionalRatingOrder = {
+  Love: 7,
+  "Really like": 6,
+  "High potential": 5,
+  Potential: 4,
+  "It’s ok": 3,
+  Indifferent: 2,
+  "Not keen": 1
+};
 
 function clearFeedback() {
-  if (feedbackEl) {
-    feedbackEl.textContent = "";
-  }
+  if (feedbackEl) feedbackEl.textContent = "";
 }
 
 function setFeedback(message) {
-  if (feedbackEl) {
-    feedbackEl.textContent = message;
-  }
+  if (feedbackEl) feedbackEl.textContent = message;
 }
 
-// -----------------------------------------
-// Single-select population
-// -----------------------------------------
-
-function populateSingleSelect(
-  selectEl,
-  options,
-  placeholder,
-  includeAddNew = false
-) {
+function populateSingleSelect(selectEl, options, placeholder, includeAddNew = false) {
   if (!selectEl) return;
 
   const previousValue = selectEl.value;
@@ -580,56 +578,31 @@ function refreshItemTypeOptions() {
 
   const category = fieldRefs.category.value;
   const options = settingsData.itemTypesByCategory[category] || [];
-
   populateSingleSelect(fieldRefs.itemType, options, "Select item type", true);
 }
 
 function populateSingleDropdowns() {
-  populateSingleSelect(
-    fieldRefs.category,
-    settingsData.categories,
-    "Select category",
-    true
-  );
-
+  populateSingleSelect(fieldRefs.category, settingsData.categories, "Select category", true);
   populateSingleSelect(fieldRefs.itemType, [], "Select item type", true);
-
-  populateSingleSelect(
-    fieldRefs.brand,
-    settingsData.brands,
-    "Select brand",
-    true
-  );
-
-  populateSingleSelect(
-    fieldRefs.sourceType,
-    settingsData.sourceTypes,
-    "Select source type"
-  );
-
+  populateSingleSelect(fieldRefs.brand, settingsData.brands, "Select brand", true);
+  populateSingleSelect(fieldRefs.sourceType, settingsData.sourceTypes, "Select source type");
   populateSingleSelect(
     fieldRefs.sourceLocation,
     settingsData.sourceLocations,
     "Select source location",
     true
   );
-
   populateSingleSelect(
     fieldRefs.wearFrequency,
     settingsData.wearFrequencies,
     "Select wear frequency"
   );
-
   populateSingleSelect(
     fieldRefs.resaleWillingness,
     settingsData.resaleWillingnessOptions,
     "Select resale willingness"
   );
 }
-
-// -----------------------------------------
-// Multi-select rendering
-// -----------------------------------------
 
 function formatMultiTriggerLabel(fieldKey) {
   const values = multiState[fieldKey];
@@ -638,7 +611,6 @@ function formatMultiTriggerLabel(fieldKey) {
   if (!values.length) return baseLabel;
   if (values.length === 1) return values[0];
   if (values.length === 2) return `${values[0]}, ${values[1]}`;
-
   return `${values.length} selected`;
 }
 
@@ -665,11 +637,10 @@ function toggleDraftSelection(fieldKey, value) {
 
 function renderMultiSelect(fieldKey) {
   const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
-  const optionsWrap = document.querySelector(
-    `[data-multi-options="${fieldKey}"]`
-  );
+  const optionsWrap = document.querySelector(`[data-multi-options="${fieldKey}"]`);
+  const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
 
-  if (!trigger || !optionsWrap) return;
+  if (!trigger || !optionsWrap || !panel) return;
 
   const config = multiConfig[fieldKey];
   const options = settingsData[config.optionsKey];
@@ -684,7 +655,9 @@ function renderMultiSelect(fieldKey) {
       optionEl.classList.add("is-selected");
     }
 
-    optionEl.addEventListener("click", () => {
+    optionEl.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       toggleDraftSelection(fieldKey, value);
       renderMultiSelect(fieldKey);
     });
@@ -701,9 +674,7 @@ function renderMultiSelect(fieldKey) {
 }
 
 function renderAllMultiSelects() {
-  Object.keys(multiConfig).forEach((fieldKey) => {
-    renderMultiSelect(fieldKey);
-  });
+  Object.keys(multiConfig).forEach(renderMultiSelect);
 }
 
 function closeAllMultiPanels() {
@@ -725,9 +696,7 @@ function openMultiPanel(fieldKey) {
   cloneCommittedStateToDraft(fieldKey);
   renderMultiSelect(fieldKey);
 
-  const multiEl = document.querySelector(
-    `.multi-select[data-field="${fieldKey}"]`
-  );
+  const multiEl = document.querySelector(`.multi-select[data-field="${fieldKey}"]`);
   const panel = document.querySelector(`[data-multi-panel="${fieldKey}"]`);
   const trigger = document.querySelector(`[data-multi-trigger="${fieldKey}"]`);
 
@@ -753,7 +722,6 @@ function handleMultiAdd(fieldKey) {
 
   const optionsKey = multiConfig[fieldKey].optionsKey;
   const storedValue = addUniqueOption(settingsData[optionsKey], rawValue);
-
   if (!storedValue) return;
 
   if (multiConfig[fieldKey].singleSelect) {
@@ -767,8 +735,8 @@ function handleMultiAdd(fieldKey) {
 
 function saveMultiPanel(fieldKey) {
   multiState[fieldKey] = [...multiDraftState[fieldKey]];
-  renderMultiSelect(fieldKey);
   closeAllMultiPanels();
+  renderAllMultiSelects();
 
   const parentSection = document
     .querySelector(`.multi-select[data-field="${fieldKey}"]`)
@@ -781,10 +749,6 @@ function saveMultiPanel(fieldKey) {
 
   updateSectionProgress(sectionKey);
 }
-
-// -----------------------------------------
-// Section state
-// -----------------------------------------
 
 function getSectionIndex(key) {
   return sectionOrder.indexOf(key);
@@ -830,9 +794,7 @@ function isSectionComplete(key) {
 }
 
 function renderSectionStates() {
-  const safeActiveKey = formSections[activeSectionKey]
-    ? activeSectionKey
-    : "identity";
+  const safeActiveKey = formSections[activeSectionKey] ? activeSectionKey : "identity";
 
   sectionOrder.forEach((key) => {
     const sectionEl = formSections[key];
@@ -883,10 +845,7 @@ function getCenteredScrollTopForElement(targetEl) {
   const visualCenterBias = window.innerHeight * 0.12;
 
   const targetTop =
-    absoluteTop -
-    (window.innerHeight / 2) +
-    (targetHeight / 2) +
-    visualCenterBias;
+    absoluteTop - (window.innerHeight / 2) + (targetHeight / 2) + visualCenterBias;
 
   return Math.max(0, targetTop);
 }
@@ -958,61 +917,35 @@ function updatePlusPosition() {
   const sectionHeight = activeSection.offsetHeight;
   const plusHeight = addItemPlus.offsetHeight;
 
-  const offset = Math.max(
-    0,
-    sectionTop + (sectionHeight / 2) - (plusHeight / 2)
-  );
-
+  const offset = Math.max(0, sectionTop + (sectionHeight / 2) - (plusHeight / 2));
   addItemLayout.style.setProperty("--plus-offset", `${offset}px`);
 }
 
 function validateSection(key) {
   if (key === "identity") {
-    if (normalizeValue(fieldRefs.name?.value) === "") {
-      return "Item name is required.";
-    }
-    if (fieldRefs.category?.value === "") {
-      return "Category is required.";
-    }
-    if (fieldRefs.itemType?.value === "") {
-      return "Item type is required.";
-    }
-    if (multiState.colours.length === 0) {
-      return "Select at least one colour.";
-    }
-    if (multiState.details.length === 0) {
-      return "Select at least one detail.";
-    }
+    if (normalizeValue(fieldRefs.name?.value) === "") return "Item name is required.";
+    if (fieldRefs.category?.value === "") return "Category is required.";
+    if (fieldRefs.itemType?.value === "") return "Item type is required.";
+    if (multiState.colours.length === 0) return "Select at least one colour.";
+    if (multiState.details.length === 0) return "Select at least one detail.";
     return null;
   }
 
   if (key === "wearing") {
-    if (multiState.contexts.length === 0) {
-      return "Select at least one context.";
-    }
-    if (multiState.styles.length === 0) {
-      return "Select at least one style.";
-    }
+    if (multiState.contexts.length === 0) return "Select at least one context.";
+    if (multiState.styles.length === 0) return "Select at least one style.";
     return null;
   }
 
   if (key === "source") {
-    if (fieldRefs.brand?.value === "") {
-      return "Brand is required.";
-    }
-    if (fieldRefs.sourceType?.value === "") {
-      return "Source type is required.";
-    }
-    if (fieldRefs.sourceLocation?.value === "") {
-      return "Source location is required.";
-    }
+    if (fieldRefs.brand?.value === "") return "Brand is required.";
+    if (fieldRefs.sourceType?.value === "") return "Source type is required.";
+    if (fieldRefs.sourceLocation?.value === "") return "Source location is required.";
     return null;
   }
 
   if (key === "usage") {
-    if (fieldRefs.wearFrequency?.value === "") {
-      return "Wear frequency is required.";
-    }
+    if (fieldRefs.wearFrequency?.value === "") return "Wear frequency is required.";
     if (
       fieldRefs.estimatedValue?.value === "" ||
       Number(fieldRefs.estimatedValue?.value) < 0
@@ -1028,10 +961,6 @@ function validateSection(key) {
   return null;
 }
 
-// -----------------------------------------
-// Wardrobe page rendering
-// -----------------------------------------
-
 function getWardrobeItems() {
   return items.filter((item) => getItemLifecycleState(item) === "wardrobe");
 }
@@ -1040,6 +969,225 @@ function getWardrobeTotalValue(wardrobeItems) {
   return wardrobeItems.reduce((total, item) => {
     return total + (Number(item.estimatedValue) || 0);
   }, 0);
+}
+
+function getSelectedValues(selectEl) {
+  if (!selectEl) return [];
+
+  return Array.from(selectEl.selectedOptions)
+    .map((option) => option.value)
+    .filter(Boolean);
+}
+
+function populateFilterSelect(selectEl, options) {
+  if (!selectEl) return;
+
+  selectEl.innerHTML = "";
+  options.forEach((value) => {
+    const optionEl = document.createElement("option");
+    optionEl.value = value;
+    optionEl.textContent = value;
+    selectEl.appendChild(optionEl);
+  });
+}
+
+function initWardrobeQueryControls() {
+  populateFilterSelect(wardrobeQueryRefs.filterCategory, settingsData.categories);
+  populateFilterSelect(wardrobeQueryRefs.filterColours, settingsData.colours);
+  populateFilterSelect(wardrobeQueryRefs.filterBrand, settingsData.brands);
+  populateFilterSelect(wardrobeQueryRefs.filterWearFrequency, settingsData.wearFrequencies);
+  populateFilterSelect(
+    wardrobeQueryRefs.filterResaleWillingness,
+    settingsData.resaleWillingnessOptions
+  );
+  populateFilterSelect(
+    wardrobeQueryRefs.filterEmotionalRating,
+    settingsData.emotionalRatings
+  );
+}
+
+function toggleWardrobePanel(panelKey) {
+  const isFilterPanel = panelKey === "filter";
+  const targetPanel = isFilterPanel
+    ? wardrobeQueryRefs.filterPanel
+    : wardrobeQueryRefs.sortPanel;
+  const otherPanel = isFilterPanel
+    ? wardrobeQueryRefs.sortPanel
+    : wardrobeQueryRefs.filterPanel;
+  const targetTrigger = isFilterPanel
+    ? wardrobeQueryRefs.filterTrigger
+    : wardrobeQueryRefs.sortTrigger;
+  const otherTrigger = isFilterPanel
+    ? wardrobeQueryRefs.sortTrigger
+    : wardrobeQueryRefs.filterTrigger;
+
+  if (!targetPanel || !targetTrigger) return;
+
+  const willOpen = targetPanel.hidden;
+
+  targetPanel.hidden = !willOpen;
+  targetTrigger.setAttribute("aria-expanded", String(willOpen));
+
+  if (otherPanel && otherTrigger) {
+    otherPanel.hidden = true;
+    otherTrigger.setAttribute("aria-expanded", "false");
+  }
+}
+
+function closeWardrobePanels() {
+  if (wardrobeQueryRefs.filterPanel) wardrobeQueryRefs.filterPanel.hidden = true;
+  if (wardrobeQueryRefs.sortPanel) wardrobeQueryRefs.sortPanel.hidden = true;
+  if (wardrobeQueryRefs.filterTrigger) {
+    wardrobeQueryRefs.filterTrigger.setAttribute("aria-expanded", "false");
+  }
+  if (wardrobeQueryRefs.sortTrigger) {
+    wardrobeQueryRefs.sortTrigger.setAttribute("aria-expanded", "false");
+  }
+}
+
+function syncWardrobeQueryStateFromInputs() {
+  wardrobeQueryState.filters.category = getSelectedValues(wardrobeQueryRefs.filterCategory);
+  wardrobeQueryState.filters.colours = getSelectedValues(wardrobeQueryRefs.filterColours);
+  wardrobeQueryState.filters.brand = getSelectedValues(wardrobeQueryRefs.filterBrand);
+  wardrobeQueryState.filters.wearFrequency = getSelectedValues(
+    wardrobeQueryRefs.filterWearFrequency
+  );
+  wardrobeQueryState.filters.resaleWillingness = getSelectedValues(
+    wardrobeQueryRefs.filterResaleWillingness
+  );
+  wardrobeQueryState.filters.emotionalRating = getSelectedValues(
+    wardrobeQueryRefs.filterEmotionalRating
+  );
+  wardrobeQueryState.filters.estimatedValue.min =
+    wardrobeQueryRefs.filterValueMin?.value || "";
+  wardrobeQueryState.filters.estimatedValue.max =
+    wardrobeQueryRefs.filterValueMax?.value || "";
+  wardrobeQueryState.sort.option = wardrobeQueryRefs.sortOption?.value || "";
+}
+
+function clearWardrobeQueryState() {
+  wardrobeQueryState.filters = {
+    category: [],
+    colours: [],
+    brand: [],
+    wearFrequency: [],
+    resaleWillingness: [],
+    emotionalRating: [],
+    estimatedValue: {
+      min: "",
+      max: ""
+    }
+  };
+
+  wardrobeQueryState.sort = {
+    option: ""
+  };
+
+  [
+    wardrobeQueryRefs.filterCategory,
+    wardrobeQueryRefs.filterColours,
+    wardrobeQueryRefs.filterBrand,
+    wardrobeQueryRefs.filterWearFrequency,
+    wardrobeQueryRefs.filterResaleWillingness,
+    wardrobeQueryRefs.filterEmotionalRating
+  ].forEach((selectEl) => {
+    if (!selectEl) return;
+    Array.from(selectEl.options).forEach((option) => {
+      option.selected = false;
+    });
+  });
+
+  if (wardrobeQueryRefs.filterValueMin) wardrobeQueryRefs.filterValueMin.value = "";
+  if (wardrobeQueryRefs.filterValueMax) wardrobeQueryRefs.filterValueMax.value = "";
+  if (wardrobeQueryRefs.sortOption) wardrobeQueryRefs.sortOption.value = "";
+}
+
+function matchesArrayFilter(itemValue, filterValues) {
+  if (!filterValues.length) return true;
+
+  if (Array.isArray(itemValue)) {
+    return itemValue.some((value) => filterValues.includes(value));
+  }
+
+  return filterValues.includes(itemValue);
+}
+
+function matchesEstimatedValueFilter(item, estimatedValueFilter) {
+  const value = Number(item.estimatedValue) || 0;
+  const min = estimatedValueFilter.min === "" ? null : Number(estimatedValueFilter.min);
+  const max = estimatedValueFilter.max === "" ? null : Number(estimatedValueFilter.max);
+
+  if (min !== null && value < min) return false;
+  if (max !== null && value > max) return false;
+  return true;
+}
+
+function matchesWardrobeFilters(item, filters) {
+  return (
+    matchesArrayFilter(item.category, filters.category) &&
+    matchesArrayFilter(item.colours, filters.colours) &&
+    matchesArrayFilter(item.brand, filters.brand) &&
+    matchesArrayFilter(item.wearFrequency, filters.wearFrequency) &&
+    matchesArrayFilter(item.resaleWillingness, filters.resaleWillingness) &&
+    matchesArrayFilter(item.emotionalRating, filters.emotionalRating) &&
+    matchesEstimatedValueFilter(item, filters.estimatedValue)
+  );
+}
+
+function filterWardrobeItems(wardrobeItems) {
+  return wardrobeItems.filter((item) =>
+    matchesWardrobeFilters(item, wardrobeQueryState.filters)
+  );
+}
+
+function compareTextValues(valueA, valueB) {
+  return String(valueA || "").localeCompare(String(valueB || ""), undefined, {
+    sensitivity: "base"
+  });
+}
+
+function sortWardrobeItems(filteredItems) {
+  const sortOption = wardrobeQueryState.sort.option;
+  if (!sortOption) return [...filteredItems];
+
+  return [...filteredItems].sort((a, b) => {
+    switch (sortOption) {
+      case "value_desc":
+        return (Number(b.estimatedValue) || 0) - (Number(a.estimatedValue) || 0);
+      case "value_asc":
+        return (Number(a.estimatedValue) || 0) - (Number(b.estimatedValue) || 0);
+      case "date_desc":
+        return new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0);
+      case "date_asc":
+        return new Date(a.dateAdded || 0) - new Date(b.dateAdded || 0);
+      case "brand_asc":
+        return compareTextValues(a.brand, b.brand);
+      case "brand_desc":
+        return compareTextValues(b.brand, a.brand);
+      case "category_asc":
+        return compareTextValues(a.category, b.category);
+      case "category_desc":
+        return compareTextValues(b.category, a.category);
+      case "emotion_desc":
+        return (
+          (emotionalRatingOrder[b.emotionalRating] || 0) -
+          (emotionalRatingOrder[a.emotionalRating] || 0)
+        );
+      case "emotion_asc":
+        return (
+          (emotionalRatingOrder[a.emotionalRating] || 0) -
+          (emotionalRatingOrder[b.emotionalRating] || 0)
+        );
+      default:
+        return 0;
+    }
+  });
+}
+
+function getVisibleWardrobeItems() {
+  const wardrobeItems = getWardrobeItems();
+  const filteredItems = filterWardrobeItems(wardrobeItems);
+  return sortWardrobeItems(filteredItems);
 }
 
 function renderSingleToken(value) {
@@ -1075,14 +1223,14 @@ function renderSourceToken(item) {
   `;
 }
 
-function renderWardrobeMetrics(wardrobeItems) {
+function renderWardrobeMetrics(visibleItems) {
   if (wardrobeRefs.itemCount) {
-    wardrobeRefs.itemCount.textContent = String(wardrobeItems.length);
+    wardrobeRefs.itemCount.textContent = String(visibleItems.length);
   }
 
   if (wardrobeRefs.totalValue) {
     wardrobeRefs.totalValue.textContent = formatCurrency(
-      getWardrobeTotalValue(wardrobeItems)
+      getWardrobeTotalValue(visibleItems)
     );
   }
 }
@@ -1094,20 +1242,14 @@ function createWardrobeRowMarkup(item) {
     <tr data-item-id="${escapeHtml(item.id)}">
       <td class="wardrobe-table__item-cell">
         <div class="wardrobe-table__item-inner">
-          <p class="wardrobe-table__item-name">${escapeHtml(
-            item.name || "Untitled item"
-          )}</p>
+          <p class="wardrobe-table__item-name">${escapeHtml(item.name || "Untitled item")}</p>
           <div class="wardrobe-table__item-tags">
             ${renderSingleToken(item.category)}
             ${renderSingleToken(item.itemType)}
           </div>
         </div>
       </td>
-
-      <td class="wardrobe-table__divider-cell">
-        ${renderTokenGroup(item.colours)}
-      </td>
-
+      <td class="wardrobe-table__divider-cell">${renderTokenGroup(item.colours)}</td>
       <td>${renderTokenGroup(item.details)}</td>
       <td>${renderTokenGroup(item.contexts)}</td>
       <td>${renderTokenGroup(item.styles)}</td>
@@ -1116,7 +1258,6 @@ function createWardrobeRowMarkup(item) {
       <td>${renderSingleToken(item.wearFrequency)}</td>
       <td>${renderSingleToken(item.resaleWillingness)}</td>
       <td>${emotionalMarkup}</td>
-
       <td class="wardrobe-table__value-cell">
         <button
           type="button"
@@ -1135,52 +1276,260 @@ function createWardrobeRowMarkup(item) {
   `;
 }
 
-function renderWardrobeTable(wardrobeItems) {
+function renderWardrobeTable(visibleItems) {
   if (!wardrobeRefs.tableBody) return;
 
-  if (!wardrobeItems.length) {
+  if (!visibleItems.length) {
     wardrobeRefs.tableBody.innerHTML = "";
     return;
   }
 
-  wardrobeRefs.tableBody.innerHTML = wardrobeItems
+  wardrobeRefs.tableBody.innerHTML = visibleItems
     .map((item) => createWardrobeRowMarkup(item))
     .join("");
 }
 
-function renderWardrobeEmptyState(wardrobeItems) {
-  const hasItems = wardrobeItems.length > 0;
+function getActiveQueryTokens() {
+  const tokens = [];
+
+  Object.entries(wardrobeQueryState.filters).forEach(([field, value]) => {
+    if (field === "estimatedValue") {
+      if (value.min !== "") {
+        tokens.push({
+          type: "filter",
+          field,
+          subfield: "min",
+          label: `Value ≥ ${formatCurrency(value.min)}`
+        });
+      }
+
+      if (value.max !== "") {
+        tokens.push({
+          type: "filter",
+          field,
+          subfield: "max",
+          label: `Value ≤ ${formatCurrency(value.max)}`
+        });
+      }
+
+      return;
+    }
+
+    value.forEach((entry) => {
+      tokens.push({
+        type: "filter",
+        field,
+        value: entry,
+        label: `${entry}.`
+      });
+    });
+  });
+
+  if (wardrobeQueryState.sort.option) {
+    const sortLabelMap = {
+      value_desc: "Sort: Estimated resale value — High to low",
+      value_asc: "Sort: Estimated resale value — Low to high",
+      date_desc: "Sort: Date added — Newest first",
+      date_asc: "Sort: Date added — Oldest first",
+      brand_asc: "Sort: Brand — A to Z",
+      brand_desc: "Sort: Brand — Z to A",
+      category_asc: "Sort: Category — A to Z",
+      category_desc: "Sort: Category — Z to A",
+      emotion_desc: "Sort: Emotional rating — Highest to lowest",
+      emotion_asc: "Sort: Emotional rating — Lowest to highest"
+    };
+
+    tokens.push({
+      type: "sort",
+      label: sortLabelMap[wardrobeQueryState.sort.option] || "Sort applied"
+    });
+  }
+
+  return tokens;
+}
+
+function removeActiveQueryToken(token) {
+  if (token.type === "sort") {
+    wardrobeQueryState.sort = { option: "" };
+    if (wardrobeQueryRefs.sortOption) wardrobeQueryRefs.sortOption.value = "";
+    renderApp();
+    return;
+  }
+
+  if (token.field === "estimatedValue") {
+    wardrobeQueryState.filters.estimatedValue[token.subfield] = "";
+
+    if (token.subfield === "min" && wardrobeQueryRefs.filterValueMin) {
+      wardrobeQueryRefs.filterValueMin.value = "";
+    }
+
+    if (token.subfield === "max" && wardrobeQueryRefs.filterValueMax) {
+      wardrobeQueryRefs.filterValueMax.value = "";
+    }
+
+    renderApp();
+    return;
+  }
+
+  wardrobeQueryState.filters[token.field] =
+    wardrobeQueryState.filters[token.field].filter((value) => value !== token.value);
+
+  const selectMap = {
+    category: wardrobeQueryRefs.filterCategory,
+    colours: wardrobeQueryRefs.filterColours,
+    brand: wardrobeQueryRefs.filterBrand,
+    wearFrequency: wardrobeQueryRefs.filterWearFrequency,
+    resaleWillingness: wardrobeQueryRefs.filterResaleWillingness,
+    emotionalRating: wardrobeQueryRefs.filterEmotionalRating
+  };
+
+  const selectEl = selectMap[token.field];
+  if (selectEl) {
+    Array.from(selectEl.options).forEach((option) => {
+      if (option.value === token.value) {
+        option.selected = false;
+      }
+    });
+  }
+
+  renderApp();
+}
+
+function renderActiveQueryBar() {
+  if (!wardrobeQueryRefs.activeBar || !wardrobeQueryRefs.activeTokens) return;
+
+  const tokens = getActiveQueryTokens();
+  const hasTokens = tokens.length > 0;
+
+  wardrobeQueryRefs.activeBar.hidden = !hasTokens;
+  wardrobeQueryRefs.activeTokens.innerHTML = hasTokens
+    ? tokens
+        .map(
+          (token, index) => `
+            <span class="wardrobe-active-query-token">
+              ${escapeHtml(token.label)}
+              <button
+                type="button"
+                data-active-token-index="${index}"
+                aria-label="Remove ${escapeHtml(token.label)}"
+              >
+                ×
+              </button>
+            </span>
+          `
+        )
+        .join("")
+    : "";
+
+  if (!hasTokens) return;
+
+  wardrobeQueryRefs.activeTokens
+    .querySelectorAll("[data-active-token-index]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const tokenIndex = Number(button.dataset.activeTokenIndex);
+        const currentTokens = getActiveQueryTokens();
+        const token = currentTokens[tokenIndex];
+        if (token) {
+          removeActiveQueryToken(token);
+        }
+      });
+    });
+}
+
+function renderWardrobeStates(visibleItems) {
+  const wardrobeItems = getWardrobeItems();
+  const hasWardrobeItems = wardrobeItems.length > 0;
+  const hasVisibleItems = visibleItems.length > 0;
 
   if (wardrobeRefs.emptyState) {
-    wardrobeRefs.emptyState.hidden = hasItems;
-    wardrobeRefs.emptyState.setAttribute("aria-hidden", String(hasItems));
+    wardrobeRefs.emptyState.hidden = hasWardrobeItems;
+  }
+
+  if (wardrobeQueryRefs.noResults) {
+    wardrobeQueryRefs.noResults.hidden = !hasWardrobeItems || hasVisibleItems;
   }
 
   if (wardrobeRefs.tableWrap) {
-    wardrobeRefs.tableWrap.hidden = !hasItems;
-    wardrobeRefs.tableWrap.setAttribute("aria-hidden", String(!hasItems));
+    wardrobeRefs.tableWrap.hidden = !hasVisibleItems;
   }
 }
 
 function renderWardrobePage() {
-  const wardrobeItems = getWardrobeItems();
-
-  renderWardrobeMetrics(wardrobeItems);
-  renderWardrobeEmptyState(wardrobeItems);
-  renderWardrobeTable(wardrobeItems);
+  const visibleItems = getVisibleWardrobeItems();
+  renderWardrobeMetrics(visibleItems);
+  renderWardrobeStates(visibleItems);
+  renderWardrobeTable(visibleItems);
+  renderActiveQueryBar();
 }
 
-// -----------------------------------------
-// App rendering
-// -----------------------------------------
+function wireWardrobeQueryControls() {
+  if (wardrobeQueryRefs.filterTrigger) {
+    wardrobeQueryRefs.filterTrigger.addEventListener("click", () => {
+      toggleWardrobePanel("filter");
+    });
+  }
+
+  if (wardrobeQueryRefs.sortTrigger) {
+    wardrobeQueryRefs.sortTrigger.addEventListener("click", () => {
+      toggleWardrobePanel("sort");
+    });
+  }
+
+  [
+    wardrobeQueryRefs.filterCategory,
+    wardrobeQueryRefs.filterColours,
+    wardrobeQueryRefs.filterBrand,
+    wardrobeQueryRefs.filterWearFrequency,
+    wardrobeQueryRefs.filterResaleWillingness,
+    wardrobeQueryRefs.filterEmotionalRating,
+    wardrobeQueryRefs.filterValueMin,
+    wardrobeQueryRefs.filterValueMax,
+    wardrobeQueryRefs.sortOption
+  ].forEach((control) => {
+    if (!control) return;
+
+    control.addEventListener("change", () => {
+      syncWardrobeQueryStateFromInputs();
+      renderApp();
+    });
+
+    if (control.tagName === "INPUT") {
+      control.addEventListener("input", () => {
+        syncWardrobeQueryStateFromInputs();
+        renderApp();
+      });
+    }
+  });
+
+  if (wardrobeQueryRefs.clearQuery) {
+    wardrobeQueryRefs.clearQuery.addEventListener("click", () => {
+      clearWardrobeQueryState();
+      renderApp();
+    });
+  }
+
+  if (wardrobeQueryRefs.clearQueryEmpty) {
+    wardrobeQueryRefs.clearQueryEmpty.addEventListener("click", () => {
+      clearWardrobeQueryState();
+      renderApp();
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    const clickedInsideQueryArea =
+      event.target.closest(".wardrobe-header__controls") ||
+      event.target.closest(".wardrobe-query-panel");
+
+    if (!clickedInsideQueryArea) {
+      closeWardrobePanels();
+    }
+  });
+}
 
 function renderApp() {
   renderWardrobePage();
 }
-
-// -----------------------------------------
-// Submission
-// -----------------------------------------
 
 function buildItemFromForm() {
   const lifecycleState =
@@ -1213,9 +1562,7 @@ function buildItemFromForm() {
 function validateFullForm() {
   for (const key of ["identity", "wearing", "source", "usage"]) {
     const error = validateSection(key);
-    if (error) {
-      return { key, error };
-    }
+    if (error) return { key, error };
   }
 
   return null;
@@ -1268,10 +1615,6 @@ function handleAddItemSubmit(event) {
   resetAddItemForm();
   setFeedback(`"${newItem.name}" added to ${destinationLabel}.`);
 }
-
-// -----------------------------------------
-// Single-select add-new handling
-// -----------------------------------------
 
 function handleSelectAddNew(selectEl, settingsKey, placeholder, promptText) {
   if (!selectEl || selectEl.value !== "__add_new__") return;
@@ -1407,10 +1750,6 @@ function handleUsageFieldChange() {
   updateSectionProgress("usage");
 }
 
-// -----------------------------------------
-// Wiring
-// -----------------------------------------
-
 function recenterSectionForField(element) {
   if (!element) return;
   scrollElementToWorkingCenter(element);
@@ -1494,20 +1833,42 @@ function wireSingleSelects() {
 
 function wireMultiSelects() {
   document.querySelectorAll("[data-multi-trigger]").forEach((trigger) => {
-    trigger.addEventListener("click", () => {
-      openMultiPanel(trigger.dataset.multiTrigger);
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const fieldKey = trigger.dataset.multiTrigger;
+      const multiEl = trigger.closest(".multi-select");
+
+      if (multiEl?.classList.contains("is-open")) {
+        closeAllMultiPanels();
+        renderAllMultiSelects();
+        return;
+      }
+
+      openMultiPanel(fieldKey);
     });
   });
 
   document.querySelectorAll("[data-multi-add]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       handleMultiAdd(button.dataset.multiAdd);
     });
   });
 
   document.querySelectorAll("[data-multi-save]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       saveMultiPanel(button.dataset.multiSave);
+    });
+  });
+
+  document.querySelectorAll("[data-multi-panel]").forEach((panel) => {
+    panel.addEventListener("click", (event) => {
+      event.stopPropagation();
     });
   });
 
@@ -1539,13 +1900,11 @@ function initAddItemForm() {
   window.addEventListener("resize", updatePlusPosition);
 }
 
-// -----------------------------------------
-// App init
-// -----------------------------------------
-
 document.addEventListener("DOMContentLoaded", () => {
   wireNavigation();
   showSection("add-item");
   initAddItemForm();
+  initWardrobeQueryControls();
+  wireWardrobeQueryControls();
   renderApp();
 });
