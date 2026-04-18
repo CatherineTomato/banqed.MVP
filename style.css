@@ -1,7 +1,5 @@
-/* =========================================
-   banqed MVP - Core Structural Styles
-   Base system + Add Item workflow + Wardrobe
-   ========================================= */
+/* banqed MVP - Core Structural Styles
+   Base system + Add Item workflow + Wardrobe only */
 
 *,
 *::before,
@@ -103,9 +101,7 @@ a {
   z-index: 9999;
 }
 
-/* =========================================
-   Header
-   ========================================= */
+/* Header */
 
 .site-header {
   background: var(--color-bg);
@@ -146,9 +142,7 @@ a {
   letter-spacing: -0.06em;
 }
 
-/* =========================================
-   Navigation
-   ========================================= */
+/* Navigation */
 
 .main-nav {
   display: flex;
@@ -202,9 +196,7 @@ textarea:focus-visible {
   background: var(--color-accent);
 }
 
-/* =========================================
-   Main app layout
-   ========================================= */
+/* Main app layout */
 
 .app-main {
   max-width: var(--max-width-app);
@@ -267,9 +259,7 @@ textarea:focus-visible {
   color: var(--color-text-muted);
 }
 
-/* =========================================
-   Shared utility styles
-   ========================================= */
+/* Shared utility styles */
 
 .container-row {
   display: flex;
@@ -305,9 +295,7 @@ textarea:focus-visible {
   border: 0 !important;
 }
 
-/* =========================================
-   Add Item page
-   ========================================= */
+/* Add Item page */
 
 .page-shell--form .page-shell__body {
   padding: var(--space-6);
@@ -354,9 +342,7 @@ textarea:focus-visible {
   gap: 0;
 }
 
-/* =========================================
-   Add Item section state
-   ========================================= */
+/* Add Item section state */
 
 .form-section {
   display: grid;
@@ -407,9 +393,7 @@ textarea:focus-visible {
   white-space: nowrap;
 }
 
-/* =========================================
-   Form grid + fields
-   ========================================= */
+/* Form grid + fields */
 
 .form-grid {
   display: grid;
@@ -459,9 +443,7 @@ textarea:focus-visible {
   color: var(--color-text-muted);
 }
 
-/* =========================================
-   Multi-select
-   ========================================= */
+/* Multi-select */
 
 .multi-select {
   position: relative;
@@ -556,9 +538,7 @@ textarea:focus-visible {
   margin-left: auto;
 }
 
-/* =========================================
-   Buttons + feedback
-   ========================================= */
+/* Buttons + feedback */
 
 .form-actions {
   display: grid;
@@ -595,9 +575,7 @@ textarea:focus-visible {
   font-weight: 600;
 }
 
-/* =========================================
-   Wardrobe page
-   ========================================= */
+/* Wardrobe page */
 
 .wardrobe-page {
   display: grid;
@@ -886,9 +864,7 @@ textarea:focus-visible {
   border-radius: 50%;
 }
 
-/* =========================================
-   Future analytics dropdown hook
-   ========================================= */
+/*Future analytics dropdown hook*/
 
 .nav-dropdown {
   position: relative;
@@ -918,9 +894,7 @@ textarea:focus-visible {
   font-weight: 600;
 }
 
-/* =========================================
-   Wardrobe query controls
-   ========================================= */
+/* Wardrobe query controls*/
 
 .wardrobe-query-panel {
   border: 1px solid var(--color-border-soft);
@@ -1018,9 +992,8 @@ textarea:focus-visible {
   }
 }
 
-/* =========================================
-   Responsive
-   ========================================= */
+/* Responsive */
+  
 
 @media (max-width: 1280px) {
   .add-item-layout {
