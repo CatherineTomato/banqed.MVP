@@ -47,6 +47,17 @@ I planned the Add Item page as a guided, section-by-section workflow rather than
 
 I also planned the Wardrobe page as a structured table view with filtering and sorting controls so that the app would demonstrate both data display and interactive data manipulation.
 
+### **2.4 Wireframes and Design Planning
+During the planning stage, I created initial wireframes using Canva to visualise the layout and user flow of the application.
+These designs informed:
+the structure of the Add Item form
+the layout of the Wardrobe table
+the navigation system
+
+
+
+
+
 ## **3\. HTML structure and content** {#3.-html-structure-and-content}
 
 The application uses semantic HTML to organise the content and interface.
